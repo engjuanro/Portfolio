@@ -1551,8 +1551,9 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
           + Dynamic Viewport Units + Touch/Hover detection
           + prefers-reduced-motion + prefers-color-scheme
    Breakpoints (content-driven, not device-driven):
-     phone      < 640px
-     tablet     640 – 1024px
+     phone-sm   < 480px
+     phone      < 768px
+     tablet     768 – 1024px
      desktop    1024 – 1440px
      xl-desktop > 1440px
    ═══════════════════════════════════════════ */
@@ -1572,11 +1573,38 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
   .hero{min-height:100dvh}
 }
 
-/* --- TABLET (640 – 1024px) --- */
+/* ── HAMBURGER MENU (mobile nav) ── */
+.nav-toggle{
+  display:none;
+  background:none;border:none;cursor:pointer;
+  width:44px;height:44px;padding:10px;
+  position:relative;z-index:1001;
+  flex-shrink:0;
+}
+.nav-toggle span{
+  display:block;width:20px;height:2px;
+  background:#e0e6f0;border-radius:2px;
+  transition:all 0.3s cubic-bezier(0.16,1,0.3,1);
+  position:absolute;left:12px;
+}
+.nav-toggle span:nth-child(1){top:14px}
+.nav-toggle span:nth-child(2){top:21px}
+.nav-toggle span:nth-child(3){top:28px}
+.nav-toggle.open span:nth-child(1){top:21px;transform:rotate(45deg)}
+.nav-toggle.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.nav-toggle.open span:nth-child(3){top:21px;transform:rotate(-45deg)}
+
+/* ── Mobile nav overlay ── */
+.nav-links{display:contents}
+
+/* --- TABLET (768 – 1024px) --- */
 @media(max-width:1024px){
   .projects-grid{grid-template-columns:repeat(2,1fr)}
   .project-card.featured{grid-column:span 2}
   .stats-bar{gap:40px;flex-wrap:wrap;padding:60px 20px}
+  .stat::after{display:none}
+  .timeline-section{padding:120px 20px 80px}
+  .timeline{padding:0 10px}
   .timeline::before{left:20px}
   .timeline-item,.timeline-item:nth-child(odd){
     flex-direction:column;text-align:left;padding-left:50px;
@@ -1587,52 +1615,196 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
   #exploded-psg{height:200vh}
   .project-card.featured .project-image{height:340px}
   .project-image{height:260px}
+  .skills-section{padding:var(--pad-section) 0}
+  .skill-card{flex:0 0 240px;padding:24px}
+  .client-chip{min-width:160px;min-height:68px;padding:14px 20px;font-size:14px}
+  .galaxy-gateway{padding:40px 0 30px}
+  .gateway-quote{font-size:13px;max-width:340px}
+  .centuritech-arc{padding:10px 14px}
+  .arc-step{width:24px;height:24px;font-size:10px}
+  .contact-section{padding:var(--pad-section) 0 60px}
+  footer{padding:30px 20px}
 }
 
-/* --- PHONE (< 768px) --- */
+/* --- PHONE & SMALL TABLET (< 768px) --- */
 @media(max-width:768px){
-  nav{padding:8px 12px;gap:6px;top:8px;flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-  nav::-webkit-scrollbar{display:none}
-  nav a{font-size:10px;padding:6px 8px;white-space:nowrap;flex-shrink:0}
-  .nav-logo{display:none}
-  .hero-cta{flex-direction:column;align-items:stretch;padding:0 var(--pad-gutter)}
-  .hero-cta .cta-primary,.hero-cta .cta-secondary{width:100%;min-height:52px;justify-content:center}
-  .section-header{padding:0 var(--pad-gutter) 60px}
+  /* Hamburger replaces horizontal scroll nav */
+  .nav-toggle{display:flex;align-items:center;justify-content:center}
+  .nav-logo{margin-right:auto;padding-right:0;border-right:none}
+  nav{
+    padding:8px 16px;gap:0;top:8px;
+    flex-wrap:nowrap;justify-content:space-between;
+    overflow:visible;
+  }
+  .nav-links{
+    display:flex;flex-direction:column;
+    position:fixed;top:0;left:0;right:0;
+    background:rgba(8,8,12,0.97);
+    backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+    padding:80px 24px 32px;gap:4px;
+    transform:translateY(-100%);
+    transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);
+    z-index:999;
+    border-bottom:1px solid rgba(79,195,247,0.15);
+  }
+  .nav-links.open{transform:translateY(0)}
+  .nav-links a{
+    font-size:16px;padding:14px 16px;white-space:normal;
+    border-radius:8px;transition:background 0.2s;
+    display:block;
+  }
+  .nav-links a:hover,.nav-links a.active{background:rgba(79,195,247,0.08)}
+  .nav-links a::after{display:none}
+
+  /* Hero */
+  .hero h1{letter-spacing:-1.5px}
+  .hero .subtitle{padding:0 var(--pad-gutter)}
+  .hero-cta{flex-direction:column;align-items:stretch;padding:0 var(--pad-gutter);gap:10px}
+  .hero-cta .btn{width:100%;min-height:52px;justify-content:center}
+  .scroll-cue{bottom:24px}
+
+  /* Section headers */
+  .section-header{padding:0 var(--pad-gutter) 50px}
+  .section-header::after{width:50px;height:50px;right:16px;top:-5px;opacity:0.3}
+
+  /* Projects */
+  .projects-section{padding:var(--pad-section) 0}
   .projects-grid{padding:0 var(--pad-gutter);gap:16px;grid-template-columns:1fr}
   .project-card.featured{grid-column:span 1}
   .project-card.featured .project-image,
-  .project-image{height:240px}
-  .project-body{padding:20px}
-  .certs-grid{padding:0 var(--pad-gutter);grid-template-columns:repeat(2,1fr)}
-  .contact-links{flex-direction:column;align-items:stretch;padding:0 var(--pad-gutter)}
-  .contact-links a{width:100%;justify-content:center;min-height:52px}
-  .cursor-dot,.cursor-ring{display:none}
-  .stats-bar{gap:20px}
-  .stat-number{font-size:32px}
-  /* Gallery arrows bigger & always visible on touch */
+  .project-image{height:220px}
+  .project-body{padding:18px}
+  .project-title{font-size:18px}
+  .project-desc{font-size:13px;-webkit-line-clamp:3;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden}
+  .project-tags{gap:4px}
+  .project-tag{font-size:10px;padding:3px 10px}
+  .project-links{gap:8px;margin-top:14px;padding-top:12px}
+  .project-link{font-size:10px;padding:6px 12px}
+
+  /* Gallery — always-visible controls on touch */
   .gallery-nav{opacity:1;width:28%}
-  .gallery-nav .arrow{width:48px;height:48px;margin:0 12px}
-  .gallery-expand-btn{opacity:1;width:48px;height:48px}
-  .lightbox{padding:16px}
-  .lightbox-nav{width:48px;height:48px}
-  .lightbox-close{width:44px;height:44px;top:12px;right:12px}
-  .lightbox-fullscreen{top:12px;left:12px;padding:8px 12px;font-size:10px}
-  .exploded-label{padding:8px 10px;max-width:200px}
-  .exploded-label .label-title{font-size:13px}
-  .exploded-label .label-spec{font-size:11px;line-height:1.5}
+  .gallery-nav .arrow{width:42px;height:42px;margin:0 8px}
+  .gallery-expand-btn{opacity:1;width:42px;height:42px}
+  .gallery-count{font-size:9px;padding:3px 8px}
+  .gallery-dots .dot{width:8px;height:8px}
+  .gallery-dots .dot.active{width:24px}
+
+  /* Stats bar */
+  .stats-bar{gap:16px;padding:50px 16px}
+  .stat{padding:0 12px}
+  .stat-number{font-size:30px}
+  .stat-label{font-size:9px;letter-spacing:2px}
+  .stat::after{display:none}
+
+  /* Exploded sections (PCB/PSG) */
+  .exploded-section{overflow:hidden}
+  .exploded-container{width:100vw;height:80vh}
+  .exploded-label{padding:8px 10px;max-width:180px}
+  .exploded-label .label-title{font-size:11px;letter-spacing:1.5px;margin-bottom:4px}
+  .exploded-label .label-spec{font-size:10px;line-height:1.4}
+  .exploded-label .label-num{font-size:8px;padding:2px 6px}
+  .section-intro h2{letter-spacing:-1px}
+  .section-intro p{font-size:14px;padding:0 16px}
+  .pcb-interact-btn{bottom:12px;right:12px;padding:8px 12px;font-size:9px}
+  #exploded-psg{height:180vh}
+
+  /* Skills horizontal scroll */
+  .skills-section{padding:var(--pad-section) 0}
+  .skill-card{flex:0 0 220px;padding:20px}
+  .skill-name{font-size:15px}
+  .skill-items{font-size:12px;line-height:1.7}
+  .skill-icon{font-size:10px;padding:6px 12px}
+
+  /* Timeline */
+  .timeline-section{padding:var(--pad-section) 16px 80px}
+  .timeline{padding:0 0 0 10px}
+  .timeline::before{left:14px}
+  .timeline-item,.timeline-item:nth-child(odd){padding-left:40px}
+  .timeline-dot{left:14px;width:10px;height:10px}
+  .timeline-content{padding:16px}
+  .timeline-role{font-size:15px}
+  .timeline-company{font-size:12px}
+  .timeline-desc{font-size:11.5px}
+  .timeline-item{margin-bottom:36px}
+  .highlight-tag{font-size:8px;padding:2px 7px}
+  .centuritech-arc{padding:10px 12px}
+  .arc-step{width:22px;height:22px;font-size:9px}
+  .arc-title{font-size:9px}
+  .arc-subtitle{font-size:10px}
+  .galaxy-gateway{padding:32px 16px 24px}
+  .gateway-quote{font-size:12px;max-width:280px;padding:0 8px}
+  .gateway-author{font-size:9px}
+  .gateway-constellation{transform:scale(0.8)}
+
+  /* Certifications */
+  .certs-section{padding:var(--pad-section) 0}
+  .certs-grid{padding:0 var(--pad-gutter);grid-template-columns:repeat(2,1fr);gap:10px}
+  .cert-card{padding:14px}
+  .cert-name{font-size:12px}
+  .cert-issuer{font-size:10px}
+
+  /* Clients / Isotope */
+  .clients-section{padding:var(--pad-section) 0}
+  .isotope-pill{padding:8px 14px;font-size:11px}
+  .client-chip{min-width:140px;min-height:60px;padding:12px 16px;font-size:13px;border-radius:10px}
+  .client-chip .client-tier{font-size:8px}
+  .clients-nav-btn{width:40px;height:40px;font-size:16px}
+  .clients-footer{font-size:12px;padding:0 16px}
+
+  /* Contact */
+  .contact-section{padding:var(--pad-section) 0 60px}
+  .contact-section p{font-size:15px;padding:0 var(--pad-gutter)}
+  .contact-links{flex-direction:column;align-items:stretch;padding:0 var(--pad-gutter)}
+  .contact-links a,.contact-link{width:100%;justify-content:center;min-height:52px}
+
+  /* Lightbox */
+  .lightbox{padding:12px}
+  .lightbox-content{max-width:96vw;max-height:85vh}
+  .lightbox-content img,.lightbox-content video,.lightbox-content iframe{max-width:96vw;max-height:80vh;border-radius:6px}
+  .lightbox-nav{width:44px;height:44px;font-size:20px}
+  .lightbox-nav.prev{left:8px}
+  .lightbox-nav.next{right:8px}
+  .lightbox-close{width:40px;height:40px;top:8px;right:8px;font-size:18px}
+  .lightbox-fullscreen{top:8px;left:8px;padding:8px 12px;font-size:9px}
+  .lightbox-counter{bottom:16px;font-size:11px}
+
+  /* Footer */
+  footer{padding:24px 16px}
+  footer p{font-size:10px}
+
+  /* Custom cursor hidden on touch */
+  .cursor-dot,.cursor-ring{display:none}
+
+  /* 3D viewers inside project cards */
+  .robot-3d-viewer{min-height:220px}
+  .viewer-hint{font-size:9px;bottom:6px}
 }
 
 /* --- SMALL PHONE (< 480px) --- */
 @media(max-width:480px){
   .certs-grid{grid-template-columns:1fr}
-  nav a{font-size:9px;padding:4px 8px}
-  .project-image,.project-card.featured .project-image{height:200px}
-  .hero-cta{gap:10px}
-  .stats-bar{padding:40px 16px;gap:16px}
-  .stat-number{font-size:28px}
-  .section-header{padding:0 16px 40px}
-  .hero .subtitle{font-size:14px;padding:0 12px}
-  .lightbox{padding:16px}
+  .project-image,.project-card.featured .project-image{height:180px}
+  .hero .subtitle{font-size:14px}
+  .hero h1{letter-spacing:-1px}
+  .hero-overline{font-size:10px;letter-spacing:3px}
+  .stats-bar{padding:36px 12px;gap:12px}
+  .stat-number{font-size:26px;letter-spacing:-1px}
+  .stat-label{font-size:8px;letter-spacing:1.5px}
+  .section-header h2{letter-spacing:-1px}
+  .project-body{padding:14px}
+  .project-title{font-size:16px}
+  .project-category{font-size:9px;letter-spacing:2px}
+  .timeline-role{font-size:14px}
+  .timeline-content{padding:12px}
+  .exploded-label{max-width:150px;padding:6px 8px}
+  .exploded-label .label-title{font-size:10px;letter-spacing:1px}
+  .exploded-label .label-spec{font-size:9px}
+  .exploded-container{height:70vh}
+  .skill-card{flex:0 0 200px;padding:16px}
+  .skill-name{font-size:14px}
+  .nav-links a{font-size:15px;padding:12px 14px}
+  .contact-section h2{letter-spacing:-1px}
+  .lightbox-content img,.lightbox-content video,.lightbox-content iframe{max-width:100vw;max-height:75vh}
 }
 
 /* --- LARGE DESKTOP (> 1440px) --- */
@@ -1659,16 +1831,18 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
   /* Disable hover scale on touch (no hover) */
   .project-card:hover{transform:none}
   .project-card:hover .project-image img{transform:none}
-  .project-card:hover .gallery-gallery .slide{transform:none}
+  .project-card:hover .project-gallery .slide{transform:none}
   /* Larger tap targets (WCAG AAA 44x44) */
   nav a,.gallery-dots .dot,.lightbox-close,.lightbox-nav,.gallery-expand-btn,
-  .cta-primary,.cta-secondary,.contact-links a,.project-link{
+  .cta-primary,.cta-secondary,.contact-links a,.project-link,.nav-toggle{
     min-width:44px;min-height:44px;
   }
   .gallery-dots .dot{width:10px;height:10px}
   .gallery-dots .dot.active{width:28px}
   /* Hide desktop-only cursor */
   .cursor-dot,.cursor-ring{display:none}
+  /* Video hint always visible on touch */
+  .project-gallery .slide.video-slide.active::after{opacity:0.85}
 }
 
 /* --- FINE POINTER (mouse/trackpad — desktop) --- */
@@ -1701,11 +1875,29 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
 /* --- ORIENTATION-SPECIFIC tweaks for tablets --- */
 @media(min-width:641px) and (max-width:1024px) and (orientation:landscape){
   .hero{min-height:auto;padding:80px 0}
+  .exploded-container{height:85vh}
+}
+
+/* --- iPAD PORTRAIT (810px wide) — specific fixes --- */
+@media(min-width:768px) and (max-width:1024px) and (orientation:portrait){
+  .projects-grid{grid-template-columns:repeat(2,1fr);gap:16px}
+  .project-card.featured .project-image{height:280px}
+  .project-image{height:220px}
+  .project-title{font-size:18px}
+  .project-desc{font-size:13px}
+  .exploded-container{height:75vh}
+  .stats-bar{gap:24px;padding:50px 20px}
+  .stat-number{font-size:36px}
+  .hero{padding-bottom:40px}
+  .nav-toggle{display:none}
+  nav{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  nav a{font-size:11px;padding:6px 10px;white-space:nowrap;flex-shrink:0}
 }
 
 /* --- PRINT --- */
 @media print{
-  #sacredGeometry,nav,.particles,.gallery-nav,.gallery-expand-btn,.gallery-dots{display:none}
+  #sacredGeometry,nav,.particles,.gallery-nav,.gallery-expand-btn,.gallery-dots,.nav-toggle{display:none}
   body{background:#fff;color:#000}
   .project-card{page-break-inside:avoid;border:1px solid #ccc}
 }
@@ -1732,13 +1924,18 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
 <!-- Navigation -->
 <nav id="mainNav" aria-label="Main navigation">
   <span class="nav-logo">JR</span>
-  <a href="#hero">Home</a>
-  <a href="#exploded-pcb">Hardware</a>
-  <a href="#exploded-psg">Systems</a>
-  <a href="#projects">Projects</a>
-  <a href="#skills">Skills</a>
-  <a href="#timeline">Career</a>
-  <a href="#contact">Contact</a>
+  <div class="nav-links" id="navLinks">
+    <a href="#hero">Home</a>
+    <a href="#exploded-pcb">Hardware</a>
+    <a href="#exploded-psg">Systems</a>
+    <a href="#projects">Projects</a>
+    <a href="#skills">Skills</a>
+    <a href="#timeline">Career</a>
+    <a href="#contact">Contact</a>
+  </div>
+  <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
 
 <main>
@@ -3408,6 +3605,36 @@ function initAnimations() {
   // Nav appearance
   const nav = document.getElementById('mainNav');
   setTimeout(() => nav.classList.add('visible'), 200);
+
+  // Hamburger menu toggle (mobile)
+  const navToggle = document.getElementById('navToggle');
+  const navLinks = document.getElementById('navLinks');
+  if(navToggle && navLinks){
+    navToggle.addEventListener('click', function(){
+      const isOpen = navLinks.classList.toggle('open');
+      navToggle.classList.toggle('open');
+      navToggle.setAttribute('aria-expanded', isOpen);
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+    });
+    // Close menu when a link is clicked
+    navLinks.querySelectorAll('a').forEach(function(a){
+      a.addEventListener('click', function(){
+        navLinks.classList.remove('open');
+        navToggle.classList.remove('open');
+        navToggle.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+      });
+    });
+    // Close on escape key
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && navLinks.classList.contains('open')){
+        navLinks.classList.remove('open');
+        navToggle.classList.remove('open');
+        navToggle.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+      }
+    });
+  }
 
   // Hero entrance animation — use fromTo for reliability
   const heroSelectors = ['.hero-overline','.hero h1','.hero .subtitle','.hero .location-line','.hero-cta'];
