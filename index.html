@@ -335,21 +335,21 @@ nav a:focus-visible{outline:2px solid #4fc3f7;outline-offset:3px;border-radius:4
    ═══════════════════════════════════════════ */
 .exploded-section{
   height:300vh;position:relative;overflow:hidden;
-  background:transparent;
+  background:#050505;
 }
 #exploded-pcb{z-index:1}
-#exploded-robot{z-index:2}
-#exploded-psg{z-index:3}
+#exploded-robot{z-index:10}
+#exploded-psg{z-index:20}
 .exploded-pin{
   position:relative;height:100vh;
   display:flex;align-items:center;justify-content:center;
   overflow:hidden;
-  background:transparent;
+  background:#050505;
 }
 /* When ScrollTrigger pins, it sets position:fixed — z-index must be on the pin itself */
 #pcb-pin{z-index:1}
-#robot-pin{z-index:5}
-#psg-pin{z-index:6}
+#robot-pin{z-index:10}
+#psg-pin{z-index:20}
 .exploded-container{
   position:relative;width:min(95vw, 1400px);height:min(85vh,850px);
 }
@@ -358,7 +358,7 @@ nav a:focus-visible{outline:2px solid #4fc3f7;outline-offset:3px;border-radius:4
   content:'';position:absolute;top:50%;left:50%;
   transform:translate(-50%,-50%);
   width:65%;height:70%;border-radius:50%;
-  background:radial-gradient(ellipse at center, rgba(10,122,53,0.18) 0%, rgba(79,195,247,0.06) 40%, transparent 70%);
+  background:radial-gradient(ellipse at center, rgba(10,122,53,0.12) 0%, rgba(79,195,247,0.04) 40%, transparent 70%);
   pointer-events:none;z-index:0;
   filter:blur(40px);
 }
@@ -366,18 +366,24 @@ nav a:focus-visible{outline:2px solid #4fc3f7;outline-offset:3px;border-radius:4
   position:absolute;opacity:0;
   font-family:'JetBrains Mono',monospace;
   text-transform:uppercase;letter-spacing:2px;
+  background:rgba(5,5,5,0.75);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  padding:12px 16px;border-radius:8px;
+  border:1px solid rgba(79,195,247,0.15);
+  max-width:320px;
 }
 .exploded-label .label-title{
-  font-size:14px;font-weight:700;color:#fff;
-  display:block;margin-bottom:4px;
+  font-size:16px;font-weight:700;color:#fff;
+  display:block;margin-bottom:6px;
+  text-shadow:0 0 12px rgba(79,195,247,0.4);
 }
 .exploded-label .label-spec{
-  font-size:11px;color:#d0dae8;line-height:1.6;
-  text-shadow:0 1px 8px rgba(0,0,0,0.85);
-  text-transform:none;letter-spacing:0.5px;
+  font-size:13px;color:#e0eaf4;line-height:1.7;
+  text-shadow:0 1px 6px rgba(0,0,0,0.9);
+  text-transform:none;letter-spacing:0.3px;
 }
 .exploded-label .label-spec sup{
-  font-size:8px;line-height:0;vertical-align:super;
+  font-size:9px;line-height:0;vertical-align:super;
 }
 .exploded-label .label-line{
   position:absolute;background:rgba(255,255,255,0.15);
@@ -1524,7 +1530,7 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
   .timeline-dot{left:20px}
   .timeline-content{width:100%;padding:20px}
   .exploded-container{width:98vw;height:min(90vh,900px)}
-  .exploded-section{height:200vh}
+  .exploded-section{height:250vh}
   .project-card.featured .project-image{height:340px}
   .project-image{height:260px}
 }
@@ -1557,6 +1563,9 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
   .lightbox-nav{width:48px;height:48px}
   .lightbox-close{width:44px;height:44px;top:12px;right:12px}
   .lightbox-fullscreen{top:12px;left:12px;padding:8px 12px;font-size:10px}
+  .exploded-label{padding:8px 10px;max-width:200px}
+  .exploded-label .label-title{font-size:13px}
+  .exploded-label .label-spec{font-size:11px;line-height:1.5}
 }
 
 /* --- SMALL PHONE (< 480px) --- */
@@ -3619,7 +3628,6 @@ function setupExplodedView(name, layerOffsets) {
   const labels = section.querySelectorAll('.exploded-label');
   const layers = exploded.querySelectorAll('.exploded-layer');
 
-  // Make intro visible initially
   gsap.set(intro, { opacity:1, scale:1 });
   gsap.set(exploded, { opacity:0 });
   gsap.set(labels, { opacity:0 });
@@ -3628,20 +3636,28 @@ function setupExplodedView(name, layerOffsets) {
     scrollTrigger: {
       trigger: section,
       start: 'top top',
-      end: '+=250%',
+      end: '+=300%',
       scrub: 0.8,
       pin: pin,
       anticipatePin: 1,
+      onLeave: function(){
+        pin.style.visibility='hidden';
+        pin.style.opacity='0';
+      },
+      onEnterBack: function(){
+        pin.style.visibility='visible';
+        pin.style.opacity='1';
+      },
     }
   });
 
-  // Phase 1 (0-20%): Fade intro text out
-  tl.to(intro, { opacity:0, scale:0.9, duration:0.2, ease:'power2.in' });
+  // Phase 1: Fade intro out
+  tl.to(intro, { opacity:0, scale:0.9, duration:0.15, ease:'power2.in' });
 
-  // Phase 2 (20-30%): Fade exploded view in
-  tl.to(exploded, { opacity:1, duration:0.1 }, '-=0.05');
+  // Phase 2: Fade exploded in
+  tl.to(exploded, { opacity:1, duration:0.08 }, '-=0.03');
 
-  // Phase 3 (30-70%): Explode layers outward
+  // Phase 3: Explode layers outward
   layers.forEach(layer => {
     const dataLayer = layer.dataset.layer;
     const offset = layerOffsets[dataLayer] || {};
@@ -3649,20 +3665,20 @@ function setupExplodedView(name, layerOffsets) {
       x: (offset.x || 0),
       y: (offset.y || 0),
       scale: (offset.scale || 1),
-      duration: 0.35,
+      duration: 0.30,
       ease: 'power2.out'
     }, '<');
   });
 
-  // Phase 4 (60-72%): Show labels staggered
-  tl.to(labels, { opacity:1, duration:0.12, stagger:0.02 });
+  // Phase 4: Show labels
+  tl.to(labels, { opacity:1, duration:0.10, stagger:0.02 });
 
-  // Phase 5 (72-85%): Hold for reading
-  tl.to({}, { duration:0.13 });
+  // Phase 5: Hold for reading
+  tl.to({}, { duration:0.18 });
 
-  // Phase 6 (85-100%): Fade everything out for clean transition
+  // Phase 6: Fade out cleanly
   tl.to([exploded, ...Array.from(labels)], {
-    opacity: 0, duration: 0.15, ease: 'power2.in'
+    opacity: 0, duration: 0.12, ease: 'power2.in'
   });
 }
 
@@ -4953,43 +4969,49 @@ function setupPCB3DExplodedView() {
     scrollTrigger: {
       trigger: section,
       start: 'top top',
-      end: '+=650%',
+      end: '+=500%',
       scrub: 0.8,
       pin: pin,
       anticipatePin: 1,
-      onLeave: function(){ exploded.style.visibility='hidden'; exploded.style.pointerEvents='none'; },
-      onEnterBack: function(){ exploded.style.visibility='visible'; exploded.style.pointerEvents='auto'; },
+      onLeave: function(){
+        pin.style.visibility='hidden';
+        pin.style.opacity='0';
+        exploded.style.visibility='hidden';
+      },
+      onEnterBack: function(){
+        pin.style.visibility='visible';
+        pin.style.opacity='1';
+        exploded.style.visibility='visible';
+      },
     }
   });
 
   /* Phase 1: Intro fades out, 3D fades in */
-  tl.to(intro, { opacity:0, scale:0.9, duration:0.12, ease:'power2.in' });
-  tl.to(exploded, { opacity:1, duration:0.06 }, '-=0.03');
+  tl.to(intro, { opacity:0, scale:0.9, duration:0.10, ease:'power2.in' });
+  tl.to(exploded, { opacity:1, duration:0.05 }, '-=0.02');
 
-  /* Phase 2: Explosion starts + WAVE 1 labels (passives, power, isolation, bus) */
-  tl.to(pcbExplosion, { progress:0.45, duration:0.18, ease:'power2.out' });
-  tl.to(pcbExplosion, { wave1:1, duration:0.08 }, '-=0.08');
+  /* Phase 2: Explosion starts + WAVE 1 labels */
+  tl.to(pcbExplosion, { progress:0.45, duration:0.15, ease:'power2.out' });
+  tl.to(pcbExplosion, { wave1:1, duration:0.08 }, '-=0.06');
 
-  /* Hold for reading */
-  tl.to({}, { duration:0.10 });
+  /* Hold for reading wave 1 */
+  tl.to({}, { duration:0.14 });
 
-  /* Phase 3: Full explosion + WAVE 2 labels (acquisition system, PSG/EEG/EMG/ECG) */
-  tl.to(pcbExplosion, { progress:1, duration:0.18, ease:'power2.out' });
-  tl.to(pcbExplosion, { wave2:1, duration:0.08 }, '-=0.08');
+  /* Phase 3: Full explosion + WAVE 2 labels */
+  tl.to(pcbExplosion, { progress:1, duration:0.15, ease:'power2.out' });
+  tl.to(pcbExplosion, { wave2:1, duration:0.08 }, '-=0.06');
 
-  /* Hold for reading */
-  tl.to({}, { duration:0.12 });
+  /* Hold for reading wave 2 */
+  tl.to({}, { duration:0.14 });
 
-  /* Phase 4: Fade out completely — extra long so labels fully clear before Robotics */
-  tl.to(pcbExplosion, { wave2:0, wave1:0, duration:0.08 });
-  tl.to(exploded, { opacity:0, duration:0.08, ease:'power2.in',
+  /* Phase 4: Clean fade-out — everything disappears before Robotics */
+  tl.to(pcbExplosion, { wave2:0, wave1:0, duration:0.06 });
+  tl.to(exploded, { opacity:0, duration:0.06, ease:'power2.in',
     onComplete: function(){ exploded.style.visibility='hidden'; },
     onReverseComplete: function(){ exploded.style.visibility='visible'; }
   });
-  /* Force-hide all labels individually too */
   tl.to(labels, { opacity:0, visibility:'hidden', duration:0.01 });
-  tl.to(intro, { opacity:0, duration:0.01 }); /* ensure intro stays hidden */
-  tl.to({}, { duration:0.25 }); /* very generous dead space before robotics section */
+  tl.to(intro, { opacity:0, duration:0.01 });
 
   /* ── Viewer state ── */
   var pcbViewerReady = false;
@@ -5235,15 +5257,15 @@ function setupPCB3DExplodedView() {
         var anchorY = (-pcbScratchVec.y * 0.5 + 0.5) * h;
         var sx = anchorX + ld.offX;
         var sy = anchorY + ld.offY;
-        sx = Math.max(10, Math.min(w - 180, sx));
-        sy = Math.max(10, Math.min(h - 60, sy));
+        sx = Math.max(10, Math.min(w - 320, sx));
+        sy = Math.max(10, Math.min(h - 100, sy));
         ld.el.style.left = sx + 'px';
         ld.el.style.top = sy + 'px';
         /* Draw thin connecting line from anchor to label */
         if(ld.line){
           ld.line.setAttribute('x1', anchorX);
           ld.line.setAttribute('y1', anchorY);
-          ld.line.setAttribute('x2', sx + (ld.offX > 0 ? 0 : 170));
+          ld.line.setAttribute('x2', sx + (ld.offX > 0 ? 0 : 200));
           ld.line.setAttribute('y2', sy + 12);
         }
         if(ld.dot){
