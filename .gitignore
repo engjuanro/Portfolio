@@ -1,0 +1,90 @@
+# ═══════════════════════════════════════════
+# PRIVATE FILES — Do NOT publish to GitHub
+# ═══════════════════════════════════════════
+
+# Batch scripts (dev only)
+*.bat
+
+# Resumes & CVs
+*.docx
+*.doc
+JuanRodriguez_Resume_*.pdf
+Juan_Rodriguez_CV_*.pdf
+cerfificancionUCsandiego.pdf
+
+# Internal docs & prompts
+AUDIT_RESULTS.md
+MASTER_PROMPTS.md
+MASTER_PROMPT_PORTFOLIO_AUDIT.md
+LinkedIn_Optimization_Guide.md
+READMEPerfil.md
+
+# Utility / dev files
+copy_pcb_images.html
+pcb-exploded-3d.html
+Informe_*.md
+
+# Private folders (not part of public portfolio)
+abb/
+dashboards/
+
+# Unreferenced images
+images/PSG0.jpg
+images/11_PCB/power-supply-schematic-723-741.png.gif
+
+# ═══════════════════════════════════════════
+# SOURCE CAD FILES (too large for GitHub, not needed by website)
+# ═══════════════════════════════════════════
+*.STL
+*.stl
+*.step
+*.STEP
+*.kicad_pcb
+*.kicad_pro
+*.kicad_prl
+*.SchLib
+*.SCHLIB
+*.lck
+models/kircad egg/.history/
+models/kircad egg/sym-lib-table
+models/industrial-automation/montaje.stl
+models/industrial-automation/montaje-web.stl
+models/kircad egg/.step
+
+# ═══════════════════════════════════════════
+# UNREFERENCED / ORIGINAL LARGE FILES
+# ═══════════════════════════════════════════
+images/11_PCB/_originals/
+videos/06_Robot/Recording 2026-04-22 211246.mp4
+videos/06_Robot/WhatsApp Video 2026-04-22 at 9.12.56 PM.mp4
+videos/09_SCADA/koolred-scada-demo.mp4
+videos/09_SCADA/koolred-scada-fast.mp4
+images/psg0-components.png
+images/06_Robot/home_torre_render.png
+images/06_Robot/home_torre_verificacion.png
+images/06_Robot/tabla_DH_ejes_DYS.pdf
+images/11_PCB/13-overview.png
+images/11_PCB/14-detail-view.png
+images/11_PCB/15-routing.png
+images/11_PCB/16-component-place.png
+images/11_PCB/17-misc-1.jpg
+images/11_PCB/18-misc-2.png
+images/11_PCB/19-misc-3.png
+images/11_PCB/20-misc-4.png
+images/11_PCB/21-misc-5.png
+images/11_PCB/22-misc-6.png
+images/11_PCB/23-misc-7.png
+images/11_PCB/24-misc-8.png
+
+# ═══════════════════════════════════════════
+# SYSTEM FILES
+# ═══════════════════════════════════════════
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+
+# KiCad backups
+*-backups/
