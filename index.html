@@ -5270,7 +5270,21 @@ function setupPCB3DExplodedView() {
   function loadPCB3D() {
     function ensureGeom(cb){
       if(window.PCB_GEOM) return cb();
-      /* Use XHR to track download progress of the 7.7MB geometry file */
+      var isLocal = location.protocol === 'file:';
+      if(isLocal){
+        /* file:// — XHR blocked, use script tag (no progress) */
+        var sg = document.createElement('script');
+        sg.src = 'models/kircad egg/pcb-geom.js';
+        sg.onload = function(){
+          if(pcbBarFill) pcbBarFill.style.width = '100%';
+          if(pcbPctEl) pcbPctEl.textContent = '100%';
+          cb();
+        };
+        sg.onerror = function(){ if(loadEl) loadEl.querySelector('.pcb-loader-text').textContent='Could not load PCB geometry'; };
+        document.head.appendChild(sg);
+        return;
+      }
+      /* HTTP/HTTPS — use XHR to track download progress of the 7.7MB geometry file */
       var xhr = new XMLHttpRequest();
       xhr.open('GET', 'models/kircad egg/pcb-geom.js', true);
       xhr.onprogress = function(e){
@@ -5281,10 +5295,9 @@ function setupPCB3DExplodedView() {
         }
       };
       xhr.onload = function(){
-        if(xhr.status === 200){
+        if(xhr.status === 200 || xhr.status === 0){
           if(pcbBarFill) pcbBarFill.style.width = '100%';
           if(pcbPctEl) pcbPctEl.textContent = '100%';
-          /* Execute the script to define window.PCB_GEOM */
           try { new Function(xhr.responseText)(); } catch(e){ console.error('PCB geom parse error',e); }
           cb();
         } else {
