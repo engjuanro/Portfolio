@@ -56,9 +56,13 @@
 </script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
 <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="dns-prefetch" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Preload heavy assets so PCB section loads faster -->
+<link rel="preload" href="models/kircad egg/pcb-geom.js" as="script">
+<link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" as="script" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
@@ -334,12 +338,11 @@ nav a:focus-visible{outline:2px solid #4fc3f7;outline-offset:3px;border-radius:4
    EXPLODED VIEW SECTIONS
    ═══════════════════════════════════════════ */
 .exploded-section{
-  height:300vh;position:relative;overflow:hidden;
+  position:relative;overflow:hidden;
   background:#050505;
 }
 #exploded-pcb{z-index:1}
-#exploded-robot{z-index:10}
-#exploded-psg{z-index:20}
+#exploded-psg{z-index:20; height:250vh}
 .exploded-pin{
   position:relative;height:100vh;
   display:flex;align-items:center;justify-content:center;
@@ -348,7 +351,6 @@ nav a:focus-visible{outline:2px solid #4fc3f7;outline-offset:3px;border-radius:4
 }
 /* When ScrollTrigger pins, it sets position:fixed — z-index must be on the pin itself */
 #pcb-pin{z-index:1}
-#robot-pin{z-index:10}
 #psg-pin{z-index:20}
 .exploded-container{
   position:relative;width:min(95vw, 1400px);height:min(85vh,850px);
@@ -358,7 +360,7 @@ nav a:focus-visible{outline:2px solid #4fc3f7;outline-offset:3px;border-radius:4
   content:'';position:absolute;top:50%;left:50%;
   transform:translate(-50%,-50%);
   width:65%;height:70%;border-radius:50%;
-  background:radial-gradient(ellipse at center, rgba(10,122,53,0.12) 0%, rgba(79,195,247,0.04) 40%, transparent 70%);
+  background:radial-gradient(ellipse at center, rgba(10,80,40,0.20) 0%, rgba(79,195,247,0.06) 45%, transparent 75%);
   pointer-events:none;z-index:0;
   filter:blur(40px);
 }
@@ -366,24 +368,43 @@ nav a:focus-visible{outline:2px solid #4fc3f7;outline-offset:3px;border-radius:4
   position:absolute;opacity:0;
   font-family:'JetBrains Mono',monospace;
   text-transform:uppercase;letter-spacing:2px;
-  background:rgba(5,5,5,0.75);
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  padding:12px 16px;border-radius:8px;
-  border:1px solid rgba(79,195,247,0.15);
-  max-width:320px;
+  background:rgba(5,5,12,0.82);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  padding:16px 20px;border-radius:10px;
+  border:1px solid rgba(79,195,247,0.25);
+  box-shadow:0 0 20px rgba(79,195,247,0.08), 0 4px 30px rgba(0,0,0,0.5);
+  max-width:340px;
+  transition:box-shadow 0.4s ease;
+}
+.exploded-label:hover{
+  box-shadow:0 0 30px rgba(79,195,247,0.15), 0 4px 30px rgba(0,0,0,0.5);
 }
 .exploded-label .label-title{
-  font-size:16px;font-weight:700;color:#fff;
-  display:block;margin-bottom:6px;
-  text-shadow:0 0 12px rgba(79,195,247,0.4);
+  font-size:15px;font-weight:700;
+  display:block;margin-bottom:8px;
+  letter-spacing:3px;
+  text-shadow:0 0 18px currentColor;
 }
 .exploded-label .label-spec{
-  font-size:13px;color:#e0eaf4;line-height:1.7;
-  text-shadow:0 1px 6px rgba(0,0,0,0.9);
+  font-size:12.5px;color:#c8d8ee;line-height:1.8;
+  text-shadow:0 1px 8px rgba(0,0,0,0.95);
   text-transform:none;letter-spacing:0.3px;
 }
-.exploded-label .label-spec sup{
-  font-size:9px;line-height:0;vertical-align:super;
+.exploded-label .label-spec strong{
+  font-weight:600;
+}
+.exploded-label .label-spec sup, .exploded-label .label-spec sub{
+  font-size:9px;line-height:0;
+}
+.exploded-label .label-num{
+  display:inline-block;
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;font-weight:700;letter-spacing:2px;
+  padding:3px 8px;border-radius:4px;
+  background:rgba(79,195,247,0.12);
+  border:1px solid rgba(79,195,247,0.25);
+  color:#4fc3f7;margin-bottom:8px;
+  text-transform:uppercase;
 }
 .exploded-label .label-line{
   position:absolute;background:rgba(255,255,255,0.15);
@@ -411,6 +432,74 @@ nav a:focus-visible{outline:2px solid #4fc3f7;outline-offset:3px;border-radius:4
 .section-intro h2{
   text-shadow:0 2px 20px rgba(0,0,0,0.85),0 0 40px rgba(5,10,25,0.6);
 }
+
+/* ── PCB Loading Spinner ── */
+.pcb-loader{
+  position:absolute;bottom:15%;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+  z-index:8;
+}
+.pcb-loader-ring{
+  width:56px;height:56px;border-radius:50%;
+  border:3px solid rgba(79,195,247,0.1);
+  border-top-color:#4fc3f7;
+  animation:pcbSpin 0.9s linear infinite;
+}
+@keyframes pcbSpin{to{transform:rotate(360deg)}}
+.pcb-loader-text{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:3px;color:rgba(79,195,247,0.7);
+  text-transform:uppercase;
+}
+.pcb-loader-bar{
+  width:180px;height:2px;background:rgba(79,195,247,0.1);
+  border-radius:2px;overflow:hidden;
+}
+.pcb-loader-bar::after{
+  content:'';display:block;width:40%;height:100%;
+  background:linear-gradient(90deg,transparent,#4fc3f7,transparent);
+  animation:pcbBarSlide 1.4s ease-in-out infinite;
+}
+@keyframes pcbBarSlide{
+  0%{transform:translateX(-100%)}
+  100%{transform:translateX(350%)}
+}
+/* Interactive mode toggle button */
+.pcb-interact-btn{
+  position:absolute;bottom:20px;right:20px;z-index:15;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+  color:rgba(79,195,247,0.6);
+  background:rgba(5,5,12,0.7);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(79,195,247,0.2);
+  border-radius:8px;padding:10px 16px;
+  cursor:pointer;
+  transition:all 0.3s ease;
+  display:flex;align-items:center;gap:8px;
+}
+.pcb-interact-btn:hover{
+  color:#4fc3f7;
+  border-color:rgba(79,195,247,0.5);
+  background:rgba(5,5,12,0.9);
+}
+.pcb-interact-btn.active{
+  color:#69f0ae;
+  border-color:rgba(105,240,174,0.4);
+  box-shadow:0 0 15px rgba(105,240,174,0.1);
+}
+.pcb-interact-btn svg{
+  width:16px;height:16px;
+  fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;
+}
+/* Label entrance animation classes */
+.exploded-label{
+  transform:translateX(0px);
+  transition:box-shadow 0.4s ease, transform 0.5s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease;
+}
+.exploded-label.from-left{ transform:translateX(-40px); }
+.exploded-label.from-right{ transform:translateX(40px); }
+.exploded-label.label-visible{ transform:translateX(0px) !important; }
 
 /* ═══════════════════════════════════════════
    SVG EXPLODED COMPONENTS
@@ -478,53 +567,6 @@ nav a:focus-visible{outline:2px solid #4fc3f7;outline-offset:3px;border-radius:4
 }
 
 /* Robot Layers */
-.robot-base{
-  width:200px;height:60px;
-  background:linear-gradient(135deg,#37474f,#455a64);
-  border-radius:8px;position:absolute;
-  bottom:10%;left:50%;transform:translateX(-50%);
-  border:1px solid #546e7a;
-  box-shadow:0 8px 30px rgba(0,0,0,0.4);
-}
-.robot-joint{
-  width:50px;height:50px;
-  background:radial-gradient(circle at 40% 40%,#546e7a,#37474f);
-  border-radius:50%;border:2px solid #607d8b;
-  box-shadow:inset 0 2px 10px rgba(0,0,0,0.3);
-  position:absolute;
-}
-.robot-arm{
-  height:30px;background:linear-gradient(180deg,#455a64,#37474f);
-  border:1px solid #546e7a;border-radius:4px;
-  position:absolute;
-  box-shadow:0 4px 15px rgba(0,0,0,0.3);
-}
-.robot-effector{
-  width:80px;height:50px;
-  background:linear-gradient(135deg,#37474f,#263238);
-  border:1px solid #546e7a;border-radius:4px;
-  position:absolute;
-  box-shadow:0 4px 20px rgba(0,0,0,0.4);
-}
-.robot-gripper{
-  width:12px;height:30px;
-  background:linear-gradient(180deg,#546e7a,#37474f);
-  border:1px solid #607d8b;border-radius:2px;
-  position:absolute;
-}
-.robot-camera{
-  width:40px;height:30px;
-  background:#1a1a1a;border:2px solid #4fc3f7;
-  border-radius:4px;position:absolute;
-  box-shadow:0 0 15px rgba(79,195,247,0.3);
-}
-.robot-camera::after{
-  content:'';position:absolute;
-  width:16px;height:16px;border-radius:50%;
-  background:radial-gradient(circle,#4fc3f7,#0277bd);
-  top:50%;left:50%;transform:translate(-50%,-50%);
-}
-
 /* PSG System Layers */
 .psg-housing{
   width:350px;height:250px;
@@ -1110,13 +1152,15 @@ nav a:focus-visible{outline:2px solid #4fc3f7;outline-offset:3px;border-radius:4
   background:rgba(79,195,247,0.03);
 }
 .skill-icon{
-  font-size:28px;margin-bottom:20px;
-  width:56px;height:56px;display:flex;
+  font-size:11px;font-weight:700;letter-spacing:1px;
+  margin-bottom:20px;
+  padding:8px 14px;display:inline-flex;
   align-items:center;justify-content:center;
-  background:rgba(79,195,247,0.08);
-  border-radius:12px;
+  background:rgba(79,195,247,0.06);
+  border:1px solid rgba(79,195,247,0.15);
+  border-radius:6px;
   font-family:'JetBrains Mono',monospace;
-  color:#4fc3f7;
+  color:#4fc3f7;text-transform:uppercase;
 }
 .skill-name{
   font-size:16px;font-weight:700;color:#fff;
@@ -1530,7 +1574,7 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
   .timeline-dot{left:20px}
   .timeline-content{width:100%;padding:20px}
   .exploded-container{width:98vw;height:min(90vh,900px)}
-  .exploded-section{height:250vh}
+  #exploded-psg{height:200vh}
   .project-card.featured .project-image{height:340px}
   .project-image{height:260px}
 }
@@ -1680,7 +1724,6 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
   <span class="nav-logo">JR</span>
   <a href="#hero">Home</a>
   <a href="#exploded-pcb">Hardware</a>
-  <a href="#exploded-robot">Robotics</a>
   <a href="#exploded-psg">Systems</a>
   <a href="#projects">Projects</a>
   <a href="#skills">Skills</a>
@@ -1719,152 +1762,69 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
   <div class="exploded-pin" id="pcb-pin">
     <!-- Intro text (fades out as exploded view comes in) -->
     <div class="section-intro" id="pcb-intro">
-      <div class="overline">01 &mdash; Hardware Design</div>
-      <h2 data-editable="pcb-title">Custom PCB<br>Controllers</h2>
-      <p data-editable="pcb-desc">Patent-pending biomedical &amp; industrial field controllers. Multi-layer PCB with ADS1299 ADC, galvanic isolation, PSG/EEG/EMG acquisition, MQTT+Zigbee wireless, and full EMC compliance.</p>
+      <div class="overline">01 &mdash; Hardware Engineering</div>
+      <h2 data-editable="pcb-title">Medical-Grade<br>PCB Design</h2>
+      <p data-editable="pcb-desc">Patent-pending 64-channel polysomnography acquisition system. Multi-layer board with galvanic isolation, dual ADS1299 ADC, IEC 60601-1 certified, FDA 21 CFR Part 11 compliant. Designed from schematic to production-ready Gerber.</p>
+    </div>
+
+    <!-- Loading spinner — OUTSIDE pcb-exploded so it's visible while container is opacity:0 -->
+    <div id="pcb3dLoading" class="pcb-loader">
+      <div class="pcb-loader-ring"></div>
+      <div class="pcb-loader-text">Loading PCB Model</div>
+      <div class="pcb-loader-bar"></div>
     </div>
 
     <!-- 3D Exploded PCB Viewer -->
     <div class="exploded-container" id="pcb-exploded" style="opacity:0">
       <canvas id="pcb3dCanvas" style="width:100%;height:100%;display:block"></canvas>
-      <div id="pcb3dLoading" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'JetBrains Mono',monospace;font-size:13px;color:#4fc3f7;letter-spacing:2px">LOADING PCB MODEL...</div>
 
-      <!-- 3D Labels — positioned via JS, revealed progressively on scroll -->
-      <!-- WAVE 1: Power, isolation, comms — appear as first layers separate -->
-      <div class="exploded-label pcb3d-label pcb-wave-1" id="pcb-label-power" style="opacity:0;pointer-events:none;visibility:hidden">
-        <div style="position:absolute;left:-12px;top:8px;width:6px;height:6px;border-radius:50%;background:#4fc3f7;box-shadow:0 0 8px rgba(79,195,247,0.6)"></div>
-        <span class="label-title">Power &amp; EMC</span>
-        <span class="label-spec">Multi-rail regulation 9&ndash;36V DC<br>EMI filtering &amp; ESD protection<br>FDA 21 CFR Part 11 compliant</span>
+      <!-- Interactive mode toggle -->
+      <button class="pcb-interact-btn" id="pcb-interact-toggle" title="Enable drag to rotate and scroll to zoom">
+        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 8v8M8 12h8"/></svg>
+        <span>3D Interact</span>
+      </button>
+
+      <!-- 3D Labels — ONE per physical layer, revealed sequentially on scroll (OSI-style) -->
+
+      <!-- LAYER 1: Passives — Power & EMC -->
+      <div class="exploded-label pcb3d-label pcb-layer-label from-left" id="pcb-label-L1" data-layer="1" style="opacity:0;pointer-events:none;visibility:hidden">
+        <span class="label-num">L1</span>
+        <span class="label-title" style="color:#69f0ae">Power &amp; EMC</span>
+        <span class="label-spec">Multi-rail SMPS &mdash; 9&ndash;36V DC input<br>Conducted EMI filtering per <strong style="color:#4fc3f7">EN 55011</strong><br>Transient &amp; ESD protection (IEC 61000-4-2)<br><strong style="color:#4fc3f7">FDA 21 CFR Part 11</strong> electronic records</span>
       </div>
-      <div class="exploded-label pcb3d-label pcb-wave-1" id="pcb-label-isolation" style="opacity:0;pointer-events:none;visibility:hidden">
-        <div style="position:absolute;left:-12px;top:8px;width:6px;height:6px;border-radius:50%;background:#4fc3f7;box-shadow:0 0 8px rgba(79,195,247,0.6)"></div>
-        <span class="label-title">Galvanic Isolation</span>
-        <span class="label-spec">Patient-safe isolation barrier<br>IEC 60601-1 medical grade<br>Creepage &amp; clearance per IPC-2221</span>
+
+      <!-- LAYER 2: ICs — Galvanic Isolation & Signal Conditioning -->
+      <div class="exploded-label pcb3d-label pcb-layer-label from-left" id="pcb-label-L2" data-layer="2" style="opacity:0;pointer-events:none;visibility:hidden">
+        <span class="label-num">L2</span>
+        <span class="label-title" style="color:#80cbc4">Galvanic Isolation &amp; Filtering</span>
+        <span class="label-spec">Patient-safe 5 kV<sub>RMS</sub> barrier<br><strong style="color:#4fc3f7">IEC 60601-1</strong> medical-grade certification<br>Anti-alias &amp; 50/60 Hz notch filters<br>Isolated DC-DC &bull; Opto-coupled data path</span>
       </div>
-      <div class="exploded-label pcb3d-label pcb-wave-1" id="pcb-label-bus" style="opacity:0;pointer-events:none;visibility:hidden">
-        <div style="position:absolute;left:-12px;top:8px;width:6px;height:6px;border-radius:50%;background:#4fc3f7;box-shadow:0 0 8px rgba(79,195,247,0.6)"></div>
-        <span class="label-title">Redundant Communication</span>
-        <span class="label-spec">SPI / I&sup2;C / UART bus<br>MQTT + Zigbee 3.0 wireless<br>CAN bus fallback &bull; Watchdog</span>
+
+      <!-- LAYER 3: Connectors — Communication & Telemetry -->
+      <div class="exploded-label pcb3d-label pcb-layer-label from-right" id="pcb-label-L3" data-layer="3" style="opacity:0;pointer-events:none;visibility:hidden">
+        <span class="label-num">L3</span>
+        <span class="label-title" style="color:#4fc3f7">Communication &amp; Telemetry</span>
+        <span class="label-spec">SPI / I&sup2;C / UART &mdash; triple-redundant bus<br>CAN 2.0B &bull; HW watchdog timer<br>MQTT + Zigbee 3.0 wireless telemetry<br>OTA firmware update &bull; BLE 5.0 ready</span>
       </div>
-      <!-- WAVE 2: Acquisition system & PSG frontend — appear on full explosion -->
-      <div class="exploded-label pcb3d-label pcb-wave-2" id="pcb-label-adc" style="opacity:0;pointer-events:none;visibility:hidden">
-        <div style="position:absolute;left:-12px;top:8px;width:6px;height:6px;border-radius:50%;background:#4fc3f7;box-shadow:0 0 8px rgba(79,195,247,0.6)"></div>
-        <span class="label-title">64-ch Real-Time Acquisition</span>
-        <span class="label-spec">Dual ADS1299 &mdash; 24-bit &Delta;&Sigma; ADC<br>8 diff. inputs &times; 8 daisy-chain<br>0.05 &mu;V/&radic;Hz &bull; 250&ndash;16 kSPS<br>Anti-alias + notch filters</span>
+
+      <!-- LAYER 4: Tall Components — Acquisition & DSP -->
+      <div class="exploded-label pcb3d-label pcb-layer-label from-right" id="pcb-label-L4" data-layer="4" style="opacity:0;pointer-events:none;visibility:hidden">
+        <span class="label-num">L4</span>
+        <span class="label-title" style="color:#ff8a65">64-ch Acquisition &amp; Processing</span>
+        <span class="label-spec">Dual <strong style="color:#4fc3f7">ADS1299</strong> &mdash; 24-bit &Delta;&Sigma; ADC<br>8 diff. inputs &times; 8 daisy-chain<br>Noise floor: 0.05 &mu;V/&radic;Hz &bull; 250&ndash;16 kSPS<br>On-board DSP &bull; Real-time FFT &amp; artifact rejection</span>
       </div>
-      <div class="exploded-label pcb3d-label pcb-wave-2" id="pcb-label-psg" style="opacity:0;pointer-events:none;visibility:hidden">
-        <div style="position:absolute;left:-12px;top:8px;width:6px;height:6px;border-radius:50%;background:#4fc3f7;box-shadow:0 0 8px rgba(79,195,247,0.6)"></div>
-        <span class="label-title">PSG / EEG / EMG / ECG</span>
-        <span class="label-spec">Full polysomnography frontend<br>Active electrodes &bull; RLD reference<br>Sleep staging &amp; cardiac monitoring<br>IEC 62304 software lifecycle</span>
+
+      <!-- LAYER 0 (base board) label — PSG Frontend summary, shown last when all layers visible -->
+      <div class="exploded-label pcb3d-label pcb-layer-label from-left" id="pcb-label-L0" data-layer="0" style="opacity:0;pointer-events:none;visibility:hidden">
+        <span class="label-num">BASE</span>
+        <span class="label-title" style="color:#ce93d8">PSG / EEG / EMG / ECG Frontend</span>
+        <span class="label-spec">Full <strong style="color:#4fc3f7">polysomnography</strong> signal chain<br>Active electrodes &bull; RLD driven reference<br>Sleep staging &amp; cardiac rhythm analysis<br><strong style="color:#4fc3f7">IEC 62304</strong> Class C &bull; IPC-2221B compliant</span>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════
-     EXPLODED VIEW 2: ROBOT INTEGRATION
-     ═══════════════════════════════════════════ -->
-<section class="exploded-section" id="exploded-robot">
-  <div class="exploded-pin" id="robot-pin">
-    <div class="section-intro" id="robot-intro">
-      <div class="overline">02 &mdash; Robotics &amp; Mobile Robotics</div>
-      <h2 data-editable="robot-title">Industrial<br>Robotics<br><span style="font-size:0.55em;color:#4fc3f7;display:inline-block;margin-top:14px;letter-spacing:0">+ Automotive AI / DMS / ADAS</span></h2>
-      <p data-editable="robot-desc">Deep integration experience across Staubli, Mitsubishi, FANUC, ABB, Universal Robots, and Kuka (incl. 7-axis LBR iiwa) — from industrial pick-and-place cells and 7-axis palletizers to ground-up custom manipulators. Designed a 6-DOF robot from scratch: ARM-based controller, custom PCB driving the servos, and a Python/MATLAB + Simulink 3D UI to emulate and command the arm using forward and inverse kinematics. <strong style="color:#4fc3f7">Mobile robotics</strong> work spans automotive AI: a Driver Monitoring + Driver Assistance system (DMS/ADAS) built in Python with TensorFlow + OpenCV CNN pipelines on STM32 + Raspberry Pi + NVIDIA Jetson, engineered with <strong style="color:#4fc3f7">redundant safety-critical architectures</strong> (dual-channel sensor fusion, watchdog timers, fail-operational fallback paths) given the life-safety criticality of in-vehicle assistive control.</p>
-    </div>
-
-    <div class="exploded-container" id="robot-exploded" style="opacity:0">
-      <!-- Robot Base -->
-      <div class="exploded-layer" data-layer="robot-base" style="z-index:1;position:absolute;bottom:8%;left:50%;transform:translateX(-50%)">
-        <div class="robot-base">
-          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;gap:40px">
-            <div style="width:8px;height:8px;background:#4fc3f7;border-radius:50%;box-shadow:0 0 10px rgba(79,195,247,0.5)"></div>
-            <div style="width:8px;height:8px;background:#4fc3f7;border-radius:50%;box-shadow:0 0 10px rgba(79,195,247,0.5)"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Joint 1 (base rotation) -->
-      <div class="exploded-layer" data-layer="joint1" style="z-index:2;position:absolute;bottom:22%;left:50%;transform:translateX(-50%)">
-        <div class="robot-joint" style="width:60px;height:60px">
-          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;border:2px solid #4fc3f7;border-radius:50%"></div>
-        </div>
-      </div>
-
-      <!-- Arm 1 (lower) -->
-      <div class="exploded-layer" data-layer="arm1" style="z-index:2;position:absolute;bottom:35%;left:48%">
-        <div class="robot-arm" style="width:140px;transform:rotate(-15deg);transform-origin:left center"></div>
-      </div>
-
-      <!-- Joint 2 (elbow) -->
-      <div class="exploded-layer" data-layer="joint2" style="z-index:3;position:absolute;top:40%;left:58%">
-        <div class="robot-joint" style="width:45px;height:45px">
-          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:15px;height:15px;border:2px solid #4fc3f7;border-radius:50%"></div>
-        </div>
-      </div>
-
-      <!-- Arm 2 (upper) -->
-      <div class="exploded-layer" data-layer="arm2" style="z-index:2;position:absolute;top:28%;left:55%">
-        <div class="robot-arm" style="width:120px;transform:rotate(20deg);transform-origin:left center"></div>
-      </div>
-
-      <!-- Joint 3 (wrist) -->
-      <div class="exploded-layer" data-layer="joint3" style="z-index:3;position:absolute;top:22%;left:70%">
-        <div class="robot-joint" style="width:35px;height:35px"></div>
-      </div>
-
-      <!-- End Effector -->
-      <div class="exploded-layer" data-layer="effector" style="z-index:4;position:absolute;top:12%;left:68%">
-        <div class="robot-effector">
-          <div class="robot-gripper" style="position:absolute;bottom:-25px;left:15px"></div>
-          <div class="robot-gripper" style="position:absolute;bottom:-25px;right:15px"></div>
-        </div>
-      </div>
-
-      <!-- Vision Camera -->
-      <div class="exploded-layer" data-layer="camera" style="z-index:5;position:absolute;top:5%;left:75%">
-        <div class="robot-camera"></div>
-      </div>
-
-      <!-- PLC Controller box -->
-      <div class="exploded-layer" data-layer="plc" style="z-index:1;position:absolute;bottom:15%;left:8%">
-        <div style="width:100px;height:70px;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid #0f3460;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
-          <div style="display:flex;gap:3px">
-            <div style="width:6px;height:6px;background:#4fc3f7;border-radius:50%;box-shadow:0 0 6px rgba(79,195,247,0.4)"></div>
-            <div style="width:6px;height:6px;background:#69f0ae;border-radius:50%;box-shadow:0 0 6px rgba(105,240,174,0.4)"></div>
-            <div style="width:6px;height:6px;background:#ffd54f;border-radius:50%;box-shadow:0 0 6px rgba(255,213,79,0.4)"></div>
-          </div>
-          <span style="font-family:'JetBrains Mono';font-size:8px;color:#666">SIEMENS PLC</span>
-        </div>
-      </div>
-
-      <!-- Labels -->
-      <div class="exploded-label" id="robot-label-effector" style="top:8%;right:5%">
-        <span class="label-title">End Effector</span>
-        <span class="label-spec">Precision gripper<br>0.02mm repeatability</span>
-      </div>
-      <div class="exploded-label" id="robot-label-vision" style="top:0%;right:0%">
-        <span class="label-title">Machine Vision</span>
-        <span class="label-spec">3D stereo camera<br>Real-time defect detection</span>
-      </div>
-      <div class="exploded-label" id="robot-label-base" style="bottom:3%;right:10%">
-        <span class="label-title">Industrial Fleet</span>
-        <span class="label-spec">Staubli TX2-60, Mitsubishi,<br>FANUC, ABB, Universal Robots</span>
-      </div>
-      <div class="exploded-label" id="robot-label-plc" style="bottom:10%;left:0%">
-        <span class="label-title">PLC Integration</span>
-        <span class="label-spec">Siemens TIA Portal<br>PROFINET real-time I/O</span>
-      </div>
-      <div class="exploded-label" id="robot-label-custom" style="top:12%;left:0%">
-        <span class="label-title">Custom 6-DOF Build</span>
-        <span class="label-spec">ARM MCU controller<br>Custom servo-driver PCB</span>
-      </div>
-      <div class="exploded-label" id="robot-label-kinematics" style="bottom:30%;left:2%">
-        <span class="label-title">Kinematics Engine</span>
-        <span class="label-spec">Python + MATLAB/Simulink<br>Forward & inverse IK, 3D UI sim</span>
-      </div>
-    </div>
-  </div>
-</section>
+<!-- Robot exploded section removed — Robotics fully covered in Projects below -->
 
 <!-- ═══════════════════════════════════════════
      EXPLODED VIEW 3: PSG RADIOPHARM SYSTEM
@@ -1872,7 +1832,7 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
 <section class="exploded-section" id="exploded-psg">
   <div class="exploded-pin" id="psg-pin">
     <div class="section-intro" id="psg-intro">
-      <div class="overline">03 &mdash; Automated Production Systems</div>
+      <div class="overline">02 &mdash; Automated Production Systems</div>
       <h2 data-editable="psg-title">Mission-Critical<br>Production</h2>
       <p data-editable="psg-desc">End-to-end automated production systems engineered for zero-defect, high-throughput environments &mdash; the same operational rigor required in aerospace and launch vehicle manufacturing. Integrated PLC/SCADA, environmental controls, real-time process monitoring, and full V&amp;V documentation (FAT/SAT/IQ/OQ/PQ). Currently deployed across FDA-approved radiopharmaceutical production (Pluvicto&reg;, Lutathera&reg;, Xofigo&reg;).</p>
     </div>
@@ -2834,27 +2794,27 @@ const PORTFOLIO_DATA = {
     }
   ],
   skills: [
-    { icon: '&#x2699;', name: 'PLC & Controls', items: 'Siemens TIA Portal, Allen-Bradley, Beckhoff TwinCAT, Schneider M172, IEC 61131-3 (Ladder/LAD, Structured Text/ST, Function Block/FBD, SFC, AWL, FUP, KOP)' },
-    { icon: '&#x1f4e1;', name: 'SCADA & HMI', items: 'Ignition, WinCC, FactoryTalk, SIMATIC, OPC-UA, Modbus TCP/RTU, PROFINET, EtherNet/IP' },
-    { icon: '&#x1f3e2;', name: 'BMS / Building Automation', items: 'Schneider AS-P (EcoStruxure), Honeywell JACE 8000 (Niagara), Trane Tracer SC+, Alerton, MNB controllers, BACnet MS/TP + IP' },
-    { icon: '&#x1f4a1;', name: 'Embedded & Linux Boards', items: 'STM32, ESP32, ARM Cortex-M0/M4, PIC, ATmega, Nordic nRF52, Silabs EFR32BG22, Raspberry Pi 3/4/Zero+, MangOH Red (Legato Framework), Particle, Arduino, TI LaunchPad, DAQ NI' },
-    { icon: '&#x1f4bb;', name: 'FPGA & Reconfigurable', items: 'Xilinx Spartan-3, Xilinx CoolRunner-II CPLD, VHDL, Verilog, timing analysis, I/O constraints' },
-    { icon: '&#x1f4f6;', name: 'Wireless Protocols', items: 'BLE 2.4 & BLE 5.0, IEEE 802.15.4 (OpenThread + Zigbee), WiFi, GSM (SIM800), BACnet over MS/TP + IP, LoRaWAN' },
-    { icon: '&#x1f517;', name: 'IoT & Low-Level Protocols', items: 'MQTT / MQTT-SN, CoAP, HTTP/HTTPS, TCP/IP, Modbus TCP & RTU & MS/TP, CAN, RS-232, RS-485, TTL, SPI, UART, I2C, sensor fusion & IC driver development' },
-    { icon: '&#x1f3af;', name: 'PCB Design', items: 'Altium Designer, Eagle, KiCad — multi-layer stackup, impedance control, EMI/EMC, DFM, full deliverables (schematic, PCB, BOM, Gerber, STEP)' },
-    { icon: '&#x1f9ea;', name: 'Circuit Simulation', items: 'Proteus, LTspice, Multisim, MATLAB, Simulink, LabVIEW, SPICE modeling' },
-    { icon: '&#x1f4d0;', name: 'Embedded IDEs & Toolchains', items: 'Segger Embedded Studio, Keil MDK, Simplicity Studio (Silabs), Arduino IDE, Visual Studio, PlatformIO, GCC/ARM, JTAG/SWD' },
-    { icon: '&#x1f916;', name: 'Robotics', items: 'Staubli TX2-60 + CS9, Mitsubishi, FANUC, ABB, Universal Robots, Kuka, custom 6-DOF builds, forward/inverse kinematics, ARM control, custom servo-driver PCBs, Python + MATLAB/Simulink 3D sim, Machine Vision' },
-    { icon: '&#x1f9e0;', name: 'AI / ML', items: 'Python, TensorFlow, PyTorch, OpenCV, Edge AI, Computer Vision, LLM integration, CNN, sensor-fusion perception' },
-    { icon: '&#x1f4be;', name: 'Languages', items: 'Python, C, C++, C#, Java, Android Studio (Kotlin), HTML5, CSS, PHP, JavaScript/TypeScript, Ladder (LAD), AWL, FUP, KOP, Structured Text' },
-    { icon: '&#x1f3e0;', name: 'Home Automation', items: 'OpenHAB, Home Assistant, Zigbee2MQTT, Node-RED, ESPHome, local-first smart-home architectures' },
-    { icon: '&#x1f680;', name: 'Additive Mfg & CAD', items: 'FDM, SLA, SLS, DMLS/SLM metal printing, large-format additive, GD&T, SolidWorks, Fusion 360, AutoCAD, DFM/DFA, rapid prototyping, production-scale 3D printing workflows' },
-    { icon: '&#x1f3ed;', name: 'Pharma / GMP / Aerospace QMS', items: 'FDA 21 CFR Part 11, cGMP, GAMP5, IQ/OQ/PQ, Class A Cleanrooms, GDP, data integrity (ALCOA+), AS9100-equivalent rigor' },
-    { icon: '&#x1f52c;', name: 'Radiopharmaceuticals', items: '18F-FDG, 68Ga-DOTATATE, 99mTc, 123/131I, 90Y, 153Sm, 177Lu-PSMA, 161Tb, 186/188Re, 67Cu, 211At, 212Pb, 225Ac — Hot Cell, dose calibration' },
-    { icon: '&#x1f4ca;', name: 'Data & Analytics', items: 'SQL, Grafana, InfluxDB, Data Historian, Statistical Process Control, n8n, Tableau' },
-    { icon: '&#x1f310;', name: 'Cloud & DevOps', items: 'AWS IoT, Azure, Docker, CI/CD, Linux, Nginx, GitHub Actions, Git workflows' },
-    { icon: '&#x1f4cb;', name: 'V&V & Technical Documentation', items: 'FAT, SAT, IQ/OQ/PQ, STS, Software Test Protocols, User Manuals, System Design Specs, Traceability Matrices, GAMP5, 21 CFR Part 11, AS9100-level documentation rigor, configuration management' },
-    { icon: '&#x1f4bc;', name: 'Project Management & Leadership (MBA)', items: 'PMI/PMBOK, PRINCE2, Agile (Scrum/Kanban/SAFe/LeSS), Lean Six Sigma (DMAIC), Kaizen, OKRs, EVM, Risk Registers, FMEA/HAZOP, Budget & Resource Allocation, Cross-Functional Team Leadership (10+), Engineer Mentorship & Training, Stakeholder Management, GitHub Pages & Git Workflows' }
+    { icon: 'PLC', name: 'PLC & Controls', items: 'Siemens TIA Portal, Allen-Bradley, Beckhoff TwinCAT, Schneider M172, IEC 61131-3 (Ladder/LAD, Structured Text/ST, Function Block/FBD, SFC, AWL, FUP, KOP)' },
+    { icon: 'HMI', name: 'SCADA & HMI', items: 'Ignition, WinCC, FactoryTalk, SIMATIC, OPC-UA, Modbus TCP/RTU, PROFINET, EtherNet/IP' },
+    { icon: 'BMS', name: 'BMS / Building Automation', items: 'Schneider AS-P (EcoStruxure), Honeywell JACE 8000 (Niagara), Trane Tracer SC+, Alerton, MNB controllers, BACnet MS/TP + IP' },
+    { icon: 'MCU', name: 'Embedded & Linux Boards', items: 'STM32, ESP32, ARM Cortex-M0/M4, PIC, ATmega, Nordic nRF52, Silabs EFR32BG22, Raspberry Pi 3/4/Zero+, MangOH Red (Legato Framework), Particle, Arduino, TI LaunchPad, DAQ NI' },
+    { icon: 'HDL', name: 'FPGA & Reconfigurable', items: 'Xilinx Spartan-3, Xilinx CoolRunner-II CPLD, VHDL, Verilog, timing analysis, I/O constraints' },
+    { icon: 'RF', name: 'Wireless Protocols', items: 'BLE 2.4 & BLE 5.0, IEEE 802.15.4 (OpenThread + Zigbee), WiFi, GSM (SIM800), BACnet over MS/TP + IP, LoRaWAN' },
+    { icon: 'BUS', name: 'IoT & Low-Level Protocols', items: 'MQTT / MQTT-SN, CoAP, HTTP/HTTPS, TCP/IP, Modbus TCP & RTU & MS/TP, CAN, RS-232, RS-485, TTL, SPI, UART, I2C, sensor fusion & IC driver development' },
+    { icon: 'PCB', name: 'PCB Design', items: 'Altium Designer, Eagle, KiCad — multi-layer stackup, impedance control, EMI/EMC, DFM, full deliverables (schematic, PCB, BOM, Gerber, STEP)' },
+    { icon: 'SIM', name: 'Circuit Simulation', items: 'Proteus, LTspice, Multisim, MATLAB, Simulink, LabVIEW, SPICE modeling' },
+    { icon: 'IDE', name: 'Embedded IDEs & Toolchains', items: 'Segger Embedded Studio, Keil MDK, Simplicity Studio (Silabs), Arduino IDE, Visual Studio, PlatformIO, GCC/ARM, JTAG/SWD' },
+    { icon: 'DOF', name: 'Robotics', items: 'Staubli TX2-60 + CS9, Mitsubishi, FANUC, ABB, Universal Robots, Kuka, custom 6-DOF builds, forward/inverse kinematics, ARM control, custom servo-driver PCBs, Python + MATLAB/Simulink 3D sim, Machine Vision' },
+    { icon: 'CNN', name: 'AI / ML', items: 'Python, TensorFlow, PyTorch, OpenCV, Edge AI, Computer Vision, LLM integration, CNN, sensor-fusion perception' },
+    { icon: '< >', name: 'Languages', items: 'Python, C, C++, C#, Java, Android Studio (Kotlin), HTML5, CSS, PHP, JavaScript/TypeScript, Ladder (LAD), AWL, FUP, KOP, Structured Text' },
+    { icon: 'IOT', name: 'Home Automation', items: 'OpenHAB, Home Assistant, Zigbee2MQTT, Node-RED, ESPHome, local-first smart-home architectures' },
+    { icon: 'CAD', name: 'Additive Mfg & CAD', items: 'FDM, SLA, SLS, DMLS/SLM metal printing, large-format additive, GD&T, SolidWorks, Fusion 360, AutoCAD, DFM/DFA, rapid prototyping, production-scale 3D printing workflows' },
+    { icon: 'GMP', name: 'Pharma / GMP / Aerospace QMS', items: 'FDA 21 CFR Part 11, cGMP, GAMP5, IQ/OQ/PQ, Class A Cleanrooms, GDP, data integrity (ALCOA+), AS9100-equivalent rigor' },
+    { icon: 'Rx', name: 'Radiopharmaceuticals', items: '18F-FDG, 68Ga-DOTATATE, 99mTc, 123/131I, 90Y, 153Sm, 177Lu-PSMA, 161Tb, 186/188Re, 67Cu, 211At, 212Pb, 225Ac — Hot Cell, dose calibration' },
+    { icon: 'SQL', name: 'Data & Analytics', items: 'SQL, Grafana, InfluxDB, Data Historian, Statistical Process Control, n8n, Tableau' },
+    { icon: 'OPS', name: 'Cloud & DevOps', items: 'AWS IoT, Azure, Docker, CI/CD, Linux, Nginx, GitHub Actions, Git workflows' },
+    { icon: 'V&V', name: 'V&V & Technical Documentation', items: 'FAT, SAT, IQ/OQ/PQ, STS, Software Test Protocols, User Manuals, System Design Specs, Traceability Matrices, GAMP5, 21 CFR Part 11, AS9100-level documentation rigor, configuration management' },
+    { icon: 'MBA', name: 'Project Management & Leadership (MBA)', items: 'PMI/PMBOK, PRINCE2, Agile (Scrum/Kanban/SAFe/LeSS), Lean Six Sigma (DMAIC), Kaizen, OKRs, EVM, Risk Registers, FMEA/HAZOP, Budget & Resource Allocation, Cross-Functional Team Leadership (10+), Engineer Mentorship & Training, Stakeholder Management, GitHub Pages & Git Workflows' }
   ],
   timeline: [
     {
@@ -3479,18 +3439,6 @@ function initAnimations() {
   /* PCB uses 3D Three.js viewer — setup scroll-driven explosion via custom handler */
   setupPCB3DExplodedView();
 
-  setupExplodedView('robot', {
-    'robot-base': { y:60 },
-    joint1: { y:30 },
-    arm1: { y:0, x:-20 },
-    joint2: { y:-30, x:20 },
-    arm2: { y:-50, x:40 },
-    joint3: { y:-80, x:50 },
-    effector: { y:-110, x:30 },
-    camera: { y:-140, x:60 },
-    plc: { x:-60, y:20 }
-  });
-
   setupExplodedView('psg', {
     housing: { y:0 },
     shield: { y:0, scale:1.15 },
@@ -3636,7 +3584,7 @@ function setupExplodedView(name, layerOffsets) {
     scrollTrigger: {
       trigger: section,
       start: 'top top',
-      end: '+=300%',
+      end: '+=200%',
       scrub: 0.8,
       pin: pin,
       anticipatePin: 1,
@@ -4963,14 +4911,18 @@ function setupPCB3DExplodedView() {
   gsap.set(exploded, { opacity:0 });
   gsap.set(labels, { opacity:0 });
 
-  var pcbExplosion = { progress:0, wave1:0, wave2:0 };
+  /* Layer-by-layer explosion state — each layer 0→1 individually */
+  var pcbExplosion = {
+    layer1:0, layer2:0, layer3:0, layer4:0,  /* explosion progress per group */
+    label1:0, label2:0, label3:0, label4:0, label0:0  /* label visibility per layer */
+  };
 
   var tl = gsap.timeline({
     scrollTrigger: {
       trigger: section,
       start: 'top top',
       end: '+=500%',
-      scrub: 0.8,
+      scrub: 0.5,
       pin: pin,
       anticipatePin: 1,
       onLeave: function(){
@@ -4986,27 +4938,38 @@ function setupPCB3DExplodedView() {
     }
   });
 
-  /* Phase 1: Intro fades out, 3D fades in */
-  tl.to(intro, { opacity:0, scale:0.9, duration:0.10, ease:'power2.in' });
-  tl.to(exploded, { opacity:1, duration:0.05 }, '-=0.02');
+  /* ═══ TIGHT TIMELINE — 1 scroll ≈ 1 layer, no dead time ═══ */
 
-  /* Phase 2: Explosion starts + WAVE 1 labels */
-  tl.to(pcbExplosion, { progress:0.45, duration:0.15, ease:'power2.out' });
-  tl.to(pcbExplosion, { wave1:1, duration:0.08 }, '-=0.06');
+  /* Intro fades → model appears → L1 starts IMMEDIATELY */
+  tl.to(intro, { opacity:0, scale:0.95, duration:0.03, ease:'power2.in' });
+  tl.to(exploded, { opacity:1, duration:0.02 }, '-=0.01');
 
-  /* Hold for reading wave 1 */
-  tl.to({}, { duration:0.14 });
+  /* L1 — Power & EMC */
+  tl.to(pcbExplosion, { layer1:1, label1:1, duration:0.08, ease:'power2.out' });
+  tl.to({}, { duration:0.08 }); /* hold */
+  tl.to(pcbExplosion, { label1:0, duration:0.02 });
 
-  /* Phase 3: Full explosion + WAVE 2 labels */
-  tl.to(pcbExplosion, { progress:1, duration:0.15, ease:'power2.out' });
-  tl.to(pcbExplosion, { wave2:1, duration:0.08 }, '-=0.06');
+  /* L2 — Isolation & Filtering */
+  tl.to(pcbExplosion, { layer2:1, label2:1, duration:0.08, ease:'power2.out' });
+  tl.to({}, { duration:0.08 });
+  tl.to(pcbExplosion, { label2:0, duration:0.02 });
 
-  /* Hold for reading wave 2 */
-  tl.to({}, { duration:0.14 });
+  /* L3 — Communication & Telemetry */
+  tl.to(pcbExplosion, { layer3:1, label3:1, duration:0.08, ease:'power2.out' });
+  tl.to({}, { duration:0.08 });
+  tl.to(pcbExplosion, { label3:0, duration:0.02 });
 
-  /* Phase 4: Clean fade-out — everything disappears before Robotics */
-  tl.to(pcbExplosion, { wave2:0, wave1:0, duration:0.06 });
-  tl.to(exploded, { opacity:0, duration:0.06, ease:'power2.in',
+  /* L4 — Acquisition & Processing */
+  tl.to(pcbExplosion, { layer4:1, label4:1, duration:0.08, ease:'power2.out' });
+  tl.to({}, { duration:0.08 });
+
+  /* BASE — PSG Frontend (L4 stays visible) */
+  tl.to(pcbExplosion, { label0:1, duration:0.04 });
+  tl.to({}, { duration:0.08 }); /* hold */
+
+  /* Clean fade-out */
+  tl.to(pcbExplosion, { label0:0, label4:0, duration:0.03 });
+  tl.to(exploded, { opacity:0, duration:0.04, ease:'power2.in',
     onComplete: function(){ exploded.style.visibility='hidden'; },
     onReverseComplete: function(){ exploded.style.visibility='visible'; }
   });
@@ -5021,8 +4984,11 @@ function setupPCB3DExplodedView() {
   var pcbScratchVec = null;
   var pcbLabelDefs = [];
   var pcbLineSVG = null;
-  var pcbWave1Labels = exploded.querySelectorAll('.pcb-wave-1');
-  var pcbWave2Labels = exploded.querySelectorAll('.pcb-wave-2');
+  /* Collect layer labels by data-layer attribute */
+  var pcbLayerLabels = {};
+  exploded.querySelectorAll('.pcb-layer-label').forEach(function(el){
+    pcbLayerLabels[el.dataset.layer] = el;
+  });
 
   /* ── Lazy-load: pcb-geom.js → Three.js → init ── */
   function loadPCB3D() {
@@ -5045,13 +5011,8 @@ function setupPCB3DExplodedView() {
     ensureGeom(function(){ ensureThree(initPCBViewer); });
   }
 
-  var pcbLoadObserver = new IntersectionObserver(function(entries){
-    if(entries[0].isIntersecting && !pcbViewerReady){
-      pcbLoadObserver.disconnect();
-      loadPCB3D();
-    }
-  }, { rootMargin:'100% 0px' });
-  pcbLoadObserver.observe(section);
+  /* Load IMMEDIATELY — don't wait for intersection, 7MB file needs a head start */
+  loadPCB3D();
 
   /* ════════════════════════════════════════════════════════
      REAL STL GEOMETRY from SolidWorks/KiCad/Altium via pcb-geom.js
@@ -5066,10 +5027,10 @@ function setupPCB3DExplodedView() {
     }
 
     /* ── Renderer: transparent bg, ACES like robot viewer ── */
-    pcbRenderer = new THREE.WebGLRenderer({canvas:canvas, antialias:true, alpha:true});
-    pcbRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    pcbRenderer = new THREE.WebGLRenderer({canvas:canvas, antialias:true, alpha:true, powerPreference:'high-performance'});
+    pcbRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     pcbRenderer.toneMapping = THREE.ACESFilmicToneMapping;
-    pcbRenderer.toneMappingExposure = 1.1;
+    pcbRenderer.toneMappingExposure = 0.70;
     pcbRenderer.outputEncoding = THREE.sRGBEncoding;
     pcbRenderer.setClearColor(0x000000, 0);
 
@@ -5077,26 +5038,26 @@ function setupPCB3DExplodedView() {
     pcbCamera = new THREE.PerspectiveCamera(35, 1, 1, 8000);
     pcbCamera.up.set(0, 0, 1);
 
-    /* ── Studio lighting — tuned for green PCB visibility ── */
-    var hemi = new THREE.HemisphereLight(0xc8d8f0, 0x223311, 0.5);
+    /* ── Studio lighting — dim & moody, dark-mode editorial ── */
+    var hemi = new THREE.HemisphereLight(0x8899aa, 0x111108, 0.25);
     pcbScene.add(hemi);
-    var keyLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    var keyLight = new THREE.DirectionalLight(0xffffff, 0.50);
     keyLight.position.set(300, 400, 500);
     pcbScene.add(keyLight);
-    var fillLight = new THREE.DirectionalLight(0x90a8c8, 0.4);
+    var fillLight = new THREE.DirectionalLight(0x6080a0, 0.18);
     fillLight.position.set(-400, 200, 300);
     pcbScene.add(fillLight);
-    var rimLight = new THREE.DirectionalLight(0x4fc3f7, 0.55);
+    var rimLight = new THREE.DirectionalLight(0x4fc3f7, 0.30);
     rimLight.position.set(-100, -500, 200);
     pcbScene.add(rimLight);
-    var topLight = new THREE.DirectionalLight(0xffeedd, 0.35);
+    var topLight = new THREE.DirectionalLight(0xffeedd, 0.12);
     topLight.position.set(0, 0, 800);
     pcbScene.add(topLight);
 
     /* ── Materials — realistic PCB colors, ACES-safe, DoubleSide ── */
     var pcbMats = [
-      /* PCB_Board — dark FR4 green (like real board under studio light) */
-      new THREE.MeshStandardMaterial({color:0x0b4d1c, metalness:0.05, roughness:0.65, side:THREE.DoubleSide}),
+      /* PCB_Board — very dark FR4 green, almost black-green under dim lights */
+      new THREE.MeshStandardMaterial({color:0x032808, metalness:0.10, roughness:0.75, side:THREE.DoubleSide}),
       /* Passives — dark ceramic SMD bodies */
       new THREE.MeshStandardMaterial({color:0x2a2420, metalness:0.20, roughness:0.60, side:THREE.DoubleSide}),
       /* ICs — black epoxy packages with subtle sheen */
@@ -5112,8 +5073,8 @@ function setupPCB3DExplodedView() {
     var pcbRoot = new THREE.Group();
     pcbScene.add(pcbRoot);
 
-    /* Explosion Z offsets per group (in world units after scale) */
-    var explosionOffsets = [0, 55, 115, 180, 250];
+    /* Explosion Z offsets per group — compact enough to stay on screen */
+    var explosionOffsets = [0, 50, 105, 165, 230];
 
     window.PCB_GEOM.forEach(function(part, idx){
       var posArr = b64ToF32(part.pos);
@@ -5150,48 +5111,116 @@ function setupPCB3DExplodedView() {
       g.userData.cachedCenter = b.getCenter(new THREE.Vector3());
     });
 
-    if(loadEl) loadEl.style.display = 'none';
+    /* Smooth fade-out of loading spinner */
+    if(loadEl){
+      loadEl.style.transition = 'opacity 0.4s ease';
+      loadEl.style.opacity = '0';
+      setTimeout(function(){ loadEl.style.display = 'none'; }, 400);
+    }
     pcbViewerReady = true;
     pcbScratchVec = new THREE.Vector3();
 
-    /* ── Label definitions — well-separated, no overlap ── */
+    /* ── Label definitions — one per layer, alternating left/right (OSI stack style) ── */
+    var cw = exploded.clientWidth;
+    var leftOff = -Math.min(420, cw * 0.35);
+    var rightOff = Math.min(320, cw * 0.28);
     pcbLabelDefs = [
-      { el: document.getElementById('pcb-label-power'),      groupIdx:1, offX:-320, offY:80 },
-      { el: document.getElementById('pcb-label-isolation'),  groupIdx:2, offX:-320, offY:-60 },
-      { el: document.getElementById('pcb-label-bus'),        groupIdx:3, offX:220, offY:100 },
-      { el: document.getElementById('pcb-label-adc'),        groupIdx:2, offX:220, offY:-20 },
-      { el: document.getElementById('pcb-label-psg'),        groupIdx:4, offX:220, offY:-160 }
+      { el: document.getElementById('pcb-label-L1'), groupIdx:1, offX:leftOff,  offY:20,   layerKey:'label1' },
+      { el: document.getElementById('pcb-label-L2'), groupIdx:2, offX:leftOff,  offY:-100,  layerKey:'label2' },
+      { el: document.getElementById('pcb-label-L3'), groupIdx:3, offX:rightOff, offY:40,    layerKey:'label3' },
+      { el: document.getElementById('pcb-label-L4'), groupIdx:4, offX:rightOff, offY:-140,  layerKey:'label4' },
+      { el: document.getElementById('pcb-label-L0'), groupIdx:0, offX:leftOff,  offY:-220,  layerKey:'label0' }
     ];
 
-    /* Create SVG overlay for CG Labs-style connecting lines */
+    /* Create SVG overlay for glowing connecting lines */
     pcbLineSVG = document.createElementNS('http://www.w3.org/2000/svg','svg');
     pcbLineSVG.setAttribute('style','position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;');
     exploded.style.position = 'relative';
     exploded.appendChild(pcbLineSVG);
 
+    /* SVG glow filter for lines */
+    var defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+    defs.innerHTML = '<filter id="lineGlow"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="dotGlow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';
+    pcbLineSVG.appendChild(defs);
+
     pcbLabelDefs.forEach(function(ld,i){
       var line = document.createElementNS('http://www.w3.org/2000/svg','line');
-      line.setAttribute('stroke','rgba(255,255,255,0.35)');
-      line.setAttribute('stroke-width','1');
-      line.setAttribute('stroke-dasharray','4,3');
+      line.setAttribute('stroke','rgba(79,195,247,0.55)');
+      line.setAttribute('stroke-width','1.5');
+      line.setAttribute('filter','url(#lineGlow)');
+      /* Line draws itself via stroke-dashoffset animation */
+      line.setAttribute('stroke-dasharray','500');
+      line.setAttribute('stroke-dashoffset','500');
+      line.style.transition = 'stroke-dashoffset 0.8s cubic-bezier(0.22,1,0.36,1)';
       pcbLineSVG.appendChild(line);
       ld.line = line;
-      /* Small dot at anchor point */
+      /* Glowing dot at anchor point on the PCB — starts invisible, pulses in */
       var dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
-      dot.setAttribute('r','3');
-      dot.setAttribute('fill','rgba(79,195,247,0.7)');
+      dot.setAttribute('r','4');
+      dot.setAttribute('fill','#4fc3f7');
+      dot.setAttribute('filter','url(#dotGlow)');
+      dot.style.opacity = '0';
+      dot.style.transition = 'opacity 0.5s ease 0.3s';
       pcbLineSVG.appendChild(dot);
       ld.dot = dot;
+      /* Pulse ring that appears around the dot */
+      var ring = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      ring.setAttribute('r','8');
+      ring.setAttribute('fill','none');
+      ring.setAttribute('stroke','rgba(79,195,247,0.3)');
+      ring.setAttribute('stroke-width','1');
+      ring.style.opacity = '0';
+      ring.style.transition = 'opacity 0.5s ease 0.5s';
+      pcbLineSVG.appendChild(ring);
+      ld.ring = ring;
     });
 
     resizePCB();
   }
 
-  /* ── Camera: fixed orbit, slow auto-rotate ONLY — NO user interaction ── */
+  /* ── Camera: fixed orbit, slow auto-rotate — interactive mode off by default ── */
   var pcbTheta = Math.PI * 0.35, pcbPhi = Math.PI * 0.22, pcbRadius = 650;
+  var pcbInteractive = false;
+  var pcbDragging = false, pcbDragX = 0, pcbDragY = 0;
 
-  /* Block ALL interaction on the canvas — scroll-only like CG Labs */
+  /* By default block interaction — scroll only */
   canvas.style.pointerEvents = 'none';
+
+  /* ── Interactive mode toggle ── */
+  var toggleBtn = document.getElementById('pcb-interact-toggle');
+  if(toggleBtn){
+    toggleBtn.addEventListener('click', function(){
+      pcbInteractive = !pcbInteractive;
+      canvas.style.pointerEvents = pcbInteractive ? 'auto' : 'none';
+      toggleBtn.classList.toggle('active', pcbInteractive);
+      toggleBtn.querySelector('span').textContent = pcbInteractive ? 'Interactive ON' : '3D Interact';
+    });
+  }
+
+  /* Drag to rotate (only when interactive mode is on) */
+  canvas.addEventListener('mousedown', function(e){ if(pcbInteractive){ pcbDragging=true; pcbDragX=e.clientX; pcbDragY=e.clientY; } });
+  canvas.addEventListener('touchstart', function(e){ if(pcbInteractive && e.touches.length===1){ pcbDragging=true; pcbDragX=e.touches[0].clientX; pcbDragY=e.touches[0].clientY; } }, {passive:true});
+  window.addEventListener('mousemove', function(e){
+    if(!pcbDragging) return;
+    pcbTheta -= (e.clientX - pcbDragX) * 0.005;
+    pcbPhi = Math.max(0.15, Math.min(Math.PI * 0.45, pcbPhi - (e.clientY - pcbDragY) * 0.005));
+    pcbDragX = e.clientX; pcbDragY = e.clientY;
+  });
+  window.addEventListener('touchmove', function(e){
+    if(!pcbDragging || !e.touches.length) return;
+    pcbTheta -= (e.touches[0].clientX - pcbDragX) * 0.005;
+    pcbPhi = Math.max(0.15, Math.min(Math.PI * 0.45, pcbPhi - (e.touches[0].clientY - pcbDragY) * 0.005));
+    pcbDragX = e.touches[0].clientX; pcbDragY = e.touches[0].clientY;
+  }, {passive:true});
+  window.addEventListener('mouseup', function(){ pcbDragging=false; });
+  window.addEventListener('touchend', function(){ pcbDragging=false; });
+
+  /* Scroll to zoom (only when interactive and pointer is on canvas) */
+  canvas.addEventListener('wheel', function(e){
+    if(!pcbInteractive) return;
+    e.preventDefault();
+    pcbRadius = Math.max(300, Math.min(1200, pcbRadius + e.deltaY * 0.5));
+  }, {passive:false});
 
   function resizePCB(){
     if(!pcbRenderer) return;
@@ -5215,26 +5244,35 @@ function setupPCB3DExplodedView() {
     if(pcbVisible) requestAnimationFrame(animatePCB);
     if(!pcbViewerReady) return;
 
-    /* Slow auto-rotate only */
-    pcbTheta += 0.0015;
+    /* Slow auto-rotate (pauses during user drag) */
+    if(!pcbDragging) pcbTheta += 0.0015;
 
-    /* Apply explosion along Z based on scroll progress */
-    var p = pcbExplosion.progress;
-    pcbGroups.forEach(function(g){
-      g.position.z = g.userData.baseZ + g.userData.explosionZ * p;
-    });
+    /* Apply explosion per-layer — each group uses its own progress */
+    if(pcbGroups.length >= 5){
+      pcbGroups[1].position.z = pcbGroups[1].userData.baseZ + pcbGroups[1].userData.explosionZ * pcbExplosion.layer1;
+      pcbGroups[2].position.z = pcbGroups[2].userData.baseZ + pcbGroups[2].userData.explosionZ * pcbExplosion.layer2;
+      pcbGroups[3].position.z = pcbGroups[3].userData.baseZ + pcbGroups[3].userData.explosionZ * pcbExplosion.layer3;
+      pcbGroups[4].position.z = pcbGroups[4].userData.baseZ + pcbGroups[4].userData.explosionZ * pcbExplosion.layer4;
 
-    /* Update label opacity per wave — also toggle visibility to prevent ghost overlap */
-    pcbWave1Labels.forEach(function(lbl){
-      lbl.style.opacity = pcbExplosion.wave1;
-      lbl.style.visibility = pcbExplosion.wave1 > 0.01 ? 'visible' : 'hidden';
+      /* Auto zoom-out as explosion progresses — keep everything on screen */
+      var maxExp = Math.max(pcbExplosion.layer1, pcbExplosion.layer2, pcbExplosion.layer3, pcbExplosion.layer4);
+      if(!pcbInteractive){
+        pcbRadius = 650 + maxExp * 200; /* 650 → 850 at full explosion */
+      }
+    }
+
+    /* Update label visibility per layer — smoothstep for organic feel */
+    var anyLabelVisible = false;
+    pcbLabelDefs.forEach(function(ld){
+      if(!ld.el) return;
+      var raw = pcbExplosion[ld.layerKey] || 0;
+      var v = raw * raw * (3 - 2 * raw); /* smoothstep */
+      ld.el.style.opacity = v;
+      ld.el.style.visibility = v > 0.01 ? 'visible' : 'hidden';
+      if(v > 0.01){ ld.el.classList.add('label-visible'); anyLabelVisible = true; }
+      else ld.el.classList.remove('label-visible');
     });
-    pcbWave2Labels.forEach(function(lbl){
-      lbl.style.opacity = pcbExplosion.wave2;
-      lbl.style.visibility = pcbExplosion.wave2 > 0.01 ? 'visible' : 'hidden';
-    });
-    var maxWave = Math.max(pcbExplosion.wave1, pcbExplosion.wave2);
-    if(pcbLineSVG) pcbLineSVG.style.opacity = maxWave;
+    if(pcbLineSVG) pcbLineSVG.style.opacity = anyLabelVisible ? 1 : 0;
 
     /* Spherical camera (same math as robot viewer) */
     pcbCamera.position.set(
@@ -5245,32 +5283,42 @@ function setupPCB3DExplodedView() {
     pcbCamera.lookAt(pcbTarget);
 
     /* Project labels + draw connecting lines (CG Labs style) */
-    if(maxWave > 0.01 && pcbGroups.length >= 5){
-      var w = exploded.clientWidth, h = exploded.clientHeight;
+    if(anyLabelVisible && pcbGroups.length >= 5){
+      var cw2 = exploded.clientWidth, ch2 = exploded.clientHeight;
       pcbLabelDefs.forEach(function(ld){
         if(!ld.el) return;
         var grp = pcbGroups[ld.groupIdx];
         pcbScratchVec.copy(grp.userData.cachedCenter);
         pcbScratchVec.z += grp.position.z;
         pcbScratchVec.project(pcbCamera);
-        var anchorX = (pcbScratchVec.x * 0.5 + 0.5) * w;
-        var anchorY = (-pcbScratchVec.y * 0.5 + 0.5) * h;
+        var anchorX = (pcbScratchVec.x * 0.5 + 0.5) * cw2;
+        var anchorY = (-pcbScratchVec.y * 0.5 + 0.5) * ch2;
         var sx = anchorX + ld.offX;
         var sy = anchorY + ld.offY;
-        sx = Math.max(10, Math.min(w - 320, sx));
-        sy = Math.max(10, Math.min(h - 100, sy));
+        sx = Math.max(10, Math.min(cw2 - 320, sx));
+        sy = Math.max(10, Math.min(ch2 - 100, sy));
         ld.el.style.left = sx + 'px';
         ld.el.style.top = sy + 'px';
-        /* Draw thin connecting line from anchor to label */
+        /* Animated connecting line from anchor to label edge */
+        var lineEndX = sx + (ld.offX > 0 ? 0 : 200);
+        var lineEndY = sy + 12;
+        var isVisible = parseFloat(ld.el.style.opacity) > 0.05;
         if(ld.line){
           ld.line.setAttribute('x1', anchorX);
           ld.line.setAttribute('y1', anchorY);
-          ld.line.setAttribute('x2', sx + (ld.offX > 0 ? 0 : 200));
-          ld.line.setAttribute('y2', sy + 12);
+          ld.line.setAttribute('x2', lineEndX);
+          ld.line.setAttribute('y2', lineEndY);
+          ld.line.setAttribute('stroke-dashoffset', isVisible ? '0' : '500');
         }
         if(ld.dot){
           ld.dot.setAttribute('cx', anchorX);
           ld.dot.setAttribute('cy', anchorY);
+          ld.dot.style.opacity = isVisible ? '1' : '0';
+        }
+        if(ld.ring){
+          ld.ring.setAttribute('cx', anchorX);
+          ld.ring.setAttribute('cy', anchorY);
+          ld.ring.style.opacity = isVisible ? '1' : '0';
         }
       });
     }
