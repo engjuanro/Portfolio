@@ -334,7 +334,7 @@ nav a:focus-visible{outline:2px solid #4fc3f7;outline-offset:3px;border-radius:4
    EXPLODED VIEW SECTIONS
    ═══════════════════════════════════════════ */
 .exploded-section{
-  height:300vh;position:relative;overflow:visible;
+  height:300vh;position:relative;overflow:hidden;
   background:transparent;
 }
 #exploded-pcb{z-index:1}
@@ -348,8 +348,8 @@ nav a:focus-visible{outline:2px solid #4fc3f7;outline-offset:3px;border-radius:4
 }
 /* When ScrollTrigger pins, it sets position:fixed — z-index must be on the pin itself */
 #pcb-pin{z-index:1}
-#robot-pin{z-index:2}
-#psg-pin{z-index:3}
+#robot-pin{z-index:5}
+#psg-pin{z-index:6}
 .exploded-container{
   position:relative;width:min(95vw, 1400px);height:min(85vh,850px);
 }
@@ -1721,32 +1721,32 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
       <div id="pcb3dLoading" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'JetBrains Mono',monospace;font-size:13px;color:#4fc3f7;letter-spacing:2px">LOADING PCB MODEL...</div>
 
       <!-- 3D Labels — positioned via JS, revealed progressively on scroll -->
-      <!-- WAVE 1: Passive components & power -->
-      <div class="exploded-label pcb3d-label pcb-wave-1" id="pcb-label-power" style="opacity:0;pointer-events:none">
+      <!-- WAVE 1: Power, isolation, comms — appear as first layers separate -->
+      <div class="exploded-label pcb3d-label pcb-wave-1" id="pcb-label-power" style="opacity:0;pointer-events:none;visibility:hidden">
         <div style="position:absolute;left:-12px;top:8px;width:6px;height:6px;border-radius:50%;background:#4fc3f7;box-shadow:0 0 8px rgba(79,195,247,0.6)"></div>
         <span class="label-title">Power &amp; EMC</span>
-        <span class="label-spec">Multi-rail regulation 9&ndash;36V DC<br>EMI filtering &amp; ESD protection</span>
+        <span class="label-spec">Multi-rail regulation 9&ndash;36V DC<br>EMI filtering &amp; ESD protection<br>FDA 21 CFR Part 11 compliant</span>
       </div>
-      <div class="exploded-label pcb3d-label pcb-wave-1" id="pcb-label-isolation" style="opacity:0;pointer-events:none">
+      <div class="exploded-label pcb3d-label pcb-wave-1" id="pcb-label-isolation" style="opacity:0;pointer-events:none;visibility:hidden">
         <div style="position:absolute;left:-12px;top:8px;width:6px;height:6px;border-radius:50%;background:#4fc3f7;box-shadow:0 0 8px rgba(79,195,247,0.6)"></div>
         <span class="label-title">Galvanic Isolation</span>
-        <span class="label-spec">Patient-safe isolation barrier<br>IEC 60601-1 medical compliance</span>
+        <span class="label-spec">Patient-safe isolation barrier<br>IEC 60601-1 medical grade<br>Creepage &amp; clearance per IPC-2221</span>
       </div>
-      <div class="exploded-label pcb3d-label pcb-wave-1" id="pcb-label-bus" style="opacity:0;pointer-events:none">
+      <div class="exploded-label pcb3d-label pcb-wave-1" id="pcb-label-bus" style="opacity:0;pointer-events:none;visibility:hidden">
         <div style="position:absolute;left:-12px;top:8px;width:6px;height:6px;border-radius:50%;background:#4fc3f7;box-shadow:0 0 8px rgba(79,195,247,0.6)"></div>
-        <span class="label-title">Bus &amp; Wireless</span>
-        <span class="label-spec">SPI / I&sup2;C / UART<br>MQTT + Zigbee 3.0 wireless stack</span>
+        <span class="label-title">Redundant Communication</span>
+        <span class="label-spec">SPI / I&sup2;C / UART bus<br>MQTT + Zigbee 3.0 wireless<br>CAN bus fallback &bull; Watchdog</span>
       </div>
-      <!-- WAVE 2: Acquisition system & clinical-grade frontend -->
-      <div class="exploded-label pcb3d-label pcb-wave-2" id="pcb-label-adc" style="opacity:0;pointer-events:none">
+      <!-- WAVE 2: Acquisition system & PSG frontend — appear on full explosion -->
+      <div class="exploded-label pcb3d-label pcb-wave-2" id="pcb-label-adc" style="opacity:0;pointer-events:none;visibility:hidden">
         <div style="position:absolute;left:-12px;top:8px;width:6px;height:6px;border-radius:50%;background:#4fc3f7;box-shadow:0 0 8px rgba(79,195,247,0.6)"></div>
-        <span class="label-title">64-ch Acquisition System</span>
-        <span class="label-spec">Dual ADS1299 &mdash; 24-bit &Delta;&Sigma; ADC<br>8 differential inputs per chip &times; 8 daisy-chain<br>0.05 &mu;V/&radic;Hz noise &bull; 250&ndash;16 kSPS</span>
+        <span class="label-title">64-ch Real-Time Acquisition</span>
+        <span class="label-spec">Dual ADS1299 &mdash; 24-bit &Delta;&Sigma; ADC<br>8 diff. inputs &times; 8 daisy-chain<br>0.05 &mu;V/&radic;Hz &bull; 250&ndash;16 kSPS<br>Anti-alias + notch filters</span>
       </div>
-      <div class="exploded-label pcb3d-label pcb-wave-2" id="pcb-label-psg" style="opacity:0;pointer-events:none">
+      <div class="exploded-label pcb3d-label pcb-wave-2" id="pcb-label-psg" style="opacity:0;pointer-events:none;visibility:hidden">
         <div style="position:absolute;left:-12px;top:8px;width:6px;height:6px;border-radius:50%;background:#4fc3f7;box-shadow:0 0 8px rgba(79,195,247,0.6)"></div>
-        <span class="label-title">PSG / EEG / EMG / ECG Frontend</span>
-        <span class="label-spec">Full polysomnography: EEG + EOG + EMG + ECG<br>Active electrode drivers &bull; RLD reference<br>Sleep staging &amp; cardiac monitoring</span>
+        <span class="label-title">PSG / EEG / EMG / ECG</span>
+        <span class="label-spec">Full polysomnography frontend<br>Active electrodes &bull; RLD reference<br>Sleep staging &amp; cardiac monitoring<br>IEC 62304 software lifecycle</span>
       </div>
     </div>
   </div>
@@ -5064,29 +5064,25 @@ function setupPCB3DExplodedView() {
     var fillLight = new THREE.DirectionalLight(0x90a8c8, 0.4);
     fillLight.position.set(-400, 200, 300);
     pcbScene.add(fillLight);
-    var rimLight = new THREE.DirectionalLight(0x4fc3f7, 0.6);
+    var rimLight = new THREE.DirectionalLight(0x4fc3f7, 0.55);
     rimLight.position.set(-100, -500, 200);
     pcbScene.add(rimLight);
-    var topLight = new THREE.DirectionalLight(0xfff5e0, 0.4);
+    var topLight = new THREE.DirectionalLight(0xffeedd, 0.35);
     topLight.position.set(0, 0, 800);
     pcbScene.add(topLight);
-    /* Subtle green fill from below to enhance FR4 board glow */
-    var greenFill = new THREE.DirectionalLight(0x22cc66, 0.15);
-    greenFill.position.set(0, 0, -400);
-    pcbScene.add(greenFill);
 
-    /* ── Materials — richer colors, ACES-safe, DoubleSide to fill gaps ── */
+    /* ── Materials — realistic PCB colors, ACES-safe, DoubleSide ── */
     var pcbMats = [
-      /* PCB_Board — rich emerald-green FR4 with subtle sheen */
-      new THREE.MeshStandardMaterial({color:0x0a7a35, metalness:0.12, roughness:0.50, side:THREE.DoubleSide, emissive:0x021a08, emissiveIntensity:0.15}),
-      /* Passives — warm dark brown ceramic bodies (realistic SMD look) */
-      new THREE.MeshStandardMaterial({color:0x3a2e28, metalness:0.25, roughness:0.55, side:THREE.DoubleSide}),
-      /* ICs — deep black with subtle blue-purple sheen (epoxy mold compound) */
-      new THREE.MeshStandardMaterial({color:0x1a1a24, metalness:0.45, roughness:0.25, side:THREE.DoubleSide, emissive:0x060610, emissiveIntensity:0.1}),
-      /* Connectors — bright brushed nickel (pin headers, USB, etc.) */
-      new THREE.MeshStandardMaterial({color:0x8899aa, metalness:0.88, roughness:0.12, side:THREE.DoubleSide}),
-      /* Tall_Components — anodized aluminum / heatsink silver */
-      new THREE.MeshStandardMaterial({color:0x556677, metalness:0.75, roughness:0.28, side:THREE.DoubleSide})
+      /* PCB_Board — dark FR4 green (like real board under studio light) */
+      new THREE.MeshStandardMaterial({color:0x0b4d1c, metalness:0.05, roughness:0.65, side:THREE.DoubleSide}),
+      /* Passives — dark ceramic SMD bodies */
+      new THREE.MeshStandardMaterial({color:0x2a2420, metalness:0.20, roughness:0.60, side:THREE.DoubleSide}),
+      /* ICs — black epoxy packages with subtle sheen */
+      new THREE.MeshStandardMaterial({color:0x141418, metalness:0.40, roughness:0.28, side:THREE.DoubleSide}),
+      /* Connectors — brushed nickel / tin solder */
+      new THREE.MeshStandardMaterial({color:0x778899, metalness:0.85, roughness:0.15, side:THREE.DoubleSide}),
+      /* Tall_Components — dark anodized aluminum */
+      new THREE.MeshStandardMaterial({color:0x3a4a5a, metalness:0.70, roughness:0.30, side:THREE.DoubleSide})
     ];
 
     /* ── Load real STL geometry from pcb-geom.js ── */
