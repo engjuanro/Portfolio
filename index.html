@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Juan Rodriguez — Principal Engineer | Robotics & Aerospace</title>
-<meta name="description" content="Principal Engineer — 13+ years building automated production lines, robotic systems, digital twins, and additive manufacturing infrastructure for aerospace and mission-critical industries. Relativity Space-ready. Chicago, IL.">
+<meta name="description" content="Mechatronic Engineer & Principal Engineer — 13+ years building automated production lines, robotic systems, digital twins, embedded PCB design, and additive manufacturing infrastructure for aerospace and mission-critical industries. Chicago, IL.">
 <meta property="og:title" content="Juan Rodriguez — Principal Engineer | Robotics, Additive Mfg & Aerospace Systems">
 <meta property="og:description" content="13+ years building automated production lines, robotic systems, digital twins, and additive manufacturing infrastructure for aerospace and mission-critical industries. Chicago, IL.">
 <meta property="og:type" content="website">
@@ -16,7 +16,7 @@
 <meta name="twitter:title" content="Juan Rodriguez — Engineering Portfolio">
 <meta name="twitter:description" content="Principal Engineer — 13+ years in robotics, additive manufacturing, digital twins & aerospace systems. Chicago, IL.">
 <meta name="twitter:image" content="https://engjuanro.github.io/Portfolio/images/og-preview.png">
-<meta name="keywords" content="robotics engineer, controls engineer, advanced manufacturing, digital twin, SCADA, MES, embedded systems, PCB design, PLC programming, aerospace engineer, additive manufacturing, factory automation, AI quality control, Chicago IL">
+<meta name="keywords" content="mechatronic engineer, robotics engineer, controls engineer, advanced manufacturing, digital twin, SCADA, MES, embedded systems, PCB design, PLC programming, aerospace engineer, additive manufacturing, factory automation, AI quality control, Chicago IL, EEG, PSG, medical devices">
 <link rel="canonical" href="https://engjuanro.github.io/Portfolio/">
 <script type="application/ld+json">
 {
@@ -61,7 +61,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Preload heavy assets so PCB section loads faster -->
-<link rel="preload" href="models/kircad egg/pcb-geom.js" as="script">
+<link rel="preload" href="models/kircad egg/pcb-geom.js" as="fetch" crossorigin>
 <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" as="script" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
@@ -247,7 +247,7 @@ nav a.active{color:#4fc3f7}
    ═══════════════════════════════════════════ */
 #sacredGeometry{
   position:fixed;inset:0;z-index:0;pointer-events:none;
-  will-change:contents;
+  will-change:transform;
   image-rendering:auto;
 }
 .hero-overline{
@@ -453,16 +453,26 @@ nav a:focus-visible{outline:2px solid #4fc3f7;outline-offset:3px;border-radius:4
 }
 .pcb-loader-bar{
   width:180px;height:2px;background:rgba(79,195,247,0.1);
-  border-radius:2px;overflow:hidden;
+  border-radius:2px;overflow:hidden;position:relative;
 }
-.pcb-loader-bar::after{
-  content:'';display:block;width:40%;height:100%;
-  background:linear-gradient(90deg,transparent,#4fc3f7,transparent);
+.pcb-loader-bar-fill{
+  position:absolute;top:0;left:0;height:100%;width:0%;
+  background:#4fc3f7;border-radius:2px;
+  transition:width 0.3s ease;
+}
+.pcb-loader-bar-shimmer{
+  display:block;width:40%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(79,195,247,0.6),transparent);
   animation:pcbBarSlide 1.4s ease-in-out infinite;
 }
 @keyframes pcbBarSlide{
   0%{transform:translateX(-100%)}
   100%{transform:translateX(350%)}
+}
+.pcb-loader-pct{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;color:rgba(79,195,247,0.5);
+  letter-spacing:1px;margin-top:2px;
 }
 /* Interactive mode toggle button */
 .pcb-interact-btn{
@@ -1720,7 +1730,7 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
 <div class="cursor-ring" id="cursorRing" aria-hidden="true"></div>
 
 <!-- Navigation -->
-<nav id="mainNav">
+<nav id="mainNav" aria-label="Main navigation">
   <span class="nav-logo">JR</span>
   <a href="#hero">Home</a>
   <a href="#exploded-pcb">Hardware</a>
@@ -1771,7 +1781,8 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
     <div id="pcb3dLoading" class="pcb-loader">
       <div class="pcb-loader-ring"></div>
       <div class="pcb-loader-text">Loading PCB Model</div>
-      <div class="pcb-loader-bar"></div>
+      <div class="pcb-loader-bar"><div class="pcb-loader-bar-fill" id="pcbBarFill"></div><div class="pcb-loader-bar-shimmer"></div></div>
+      <div class="pcb-loader-pct" id="pcbPct"></div>
     </div>
 
     <!-- 3D Exploded PCB Viewer -->
@@ -3284,12 +3295,12 @@ document.addEventListener('DOMContentLoaded', () => {
   renderTimeline();
   renderCerts();
 
-  // Loading screen — show for 1.5s, then fade, then init
+  // Loading screen — show for 0.8s, then fade, then init
   setTimeout(() => {
     document.getElementById('loader').classList.add('hidden');
-  }, 1500);
+  }, 800);
 
-  // Start animations after loader fully faded (1.5s wait + 0.8s fade)
+  // Start animations after loader fully faded (0.8s wait + 0.8s fade)
   setTimeout(() => {
     if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
       initAnimations();
@@ -3319,7 +3330,7 @@ document.addEventListener('DOMContentLoaded', () => {
         el.textContent = el.dataset.count + '+';
       });
     }
-  }, 2400);
+  }, 1700);
 
   // Generate electron-like particles with varied sizes and glow
   const particlesEl = document.getElementById('particles');
@@ -4935,6 +4946,10 @@ function setupPCB3DExplodedView() {
         pin.style.opacity='1';
         exploded.style.visibility='visible';
       },
+      onUpdate: function(){
+        pcbVisible = true;
+        ensurePCBLoop();
+      },
     }
   });
 
@@ -4942,7 +4957,7 @@ function setupPCB3DExplodedView() {
 
   /* Intro fades → model appears → L1 starts IMMEDIATELY */
   tl.to(intro, { opacity:0, scale:0.95, duration:0.03, ease:'power2.in' });
-  tl.to(exploded, { opacity:1, duration:0.02 }, '-=0.01');
+  tl.to(exploded, { opacity:1, duration:0.02, onStart:function(){ pcbModelShown=true; tryHideLoader(); } }, '-=0.01');
 
   /* L1 — Power & EMC */
   tl.to(pcbExplosion, { layer1:1, label1:1, duration:0.08, ease:'power2.out' });
@@ -4990,22 +5005,43 @@ function setupPCB3DExplodedView() {
     pcbLayerLabels[el.dataset.layer] = el;
   });
 
-  /* ── Lazy-load: pcb-geom.js → Three.js → init ── */
+  /* ── Load: pcb-geom.js (with progress) → Three.js → init ── */
+  var pcbBarFill = document.getElementById('pcbBarFill');
+  var pcbPctEl   = document.getElementById('pcbPct');
+
   function loadPCB3D() {
     function ensureGeom(cb){
       if(window.PCB_GEOM) return cb();
-      var sg = document.createElement('script');
-      sg.src = 'models/kircad egg/pcb-geom.js';
-      sg.onload = cb;
-      sg.onerror = function(){ if(loadEl) loadEl.textContent='Could not load PCB geometry'; };
-      document.head.appendChild(sg);
+      /* Use XHR to track download progress of the 7.7MB geometry file */
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', 'models/kircad egg/pcb-geom.js', true);
+      xhr.onprogress = function(e){
+        if(e.lengthComputable){
+          var pct = Math.round(e.loaded / e.total * 100);
+          if(pcbBarFill) pcbBarFill.style.width = pct + '%';
+          if(pcbPctEl) pcbPctEl.textContent = pct + '%';
+        }
+      };
+      xhr.onload = function(){
+        if(xhr.status === 200){
+          if(pcbBarFill) pcbBarFill.style.width = '100%';
+          if(pcbPctEl) pcbPctEl.textContent = '100%';
+          /* Execute the script to define window.PCB_GEOM */
+          try { new Function(xhr.responseText)(); } catch(e){ console.error('PCB geom parse error',e); }
+          cb();
+        } else {
+          if(loadEl) loadEl.querySelector('.pcb-loader-text').textContent='Load failed — refresh';
+        }
+      };
+      xhr.onerror = function(){ if(loadEl) loadEl.querySelector('.pcb-loader-text').textContent='Network error'; };
+      xhr.send();
     }
     function ensureThree(cb){
       if(window.THREE) return cb();
       var s = document.createElement('script');
       s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
       s.onload = cb;
-      s.onerror = function(){ if(loadEl) loadEl.textContent='Could not load 3D engine'; };
+      s.onerror = function(){ if(loadEl) loadEl.querySelector('.pcb-loader-text').textContent='Could not load 3D engine'; };
       document.head.appendChild(s);
     }
     ensureGeom(function(){ ensureThree(initPCBViewer); });
@@ -5111,13 +5147,9 @@ function setupPCB3DExplodedView() {
       g.userData.cachedCenter = b.getCenter(new THREE.Vector3());
     });
 
-    /* Smooth fade-out of loading spinner */
-    if(loadEl){
-      loadEl.style.transition = 'opacity 0.4s ease';
-      loadEl.style.opacity = '0';
-      setTimeout(function(){ loadEl.style.display = 'none'; }, 400);
-    }
+    /* Mark viewer ready — loader hides only when GSAP reveals the model */
     pcbViewerReady = true;
+    tryHideLoader();
     pcbScratchVec = new THREE.Vector3();
 
     /* ── Label definitions — one per layer, alternating left/right (OSI stack style) ── */
@@ -5176,6 +5208,7 @@ function setupPCB3DExplodedView() {
     });
 
     resizePCB();
+    ensurePCBLoop();
   }
 
   /* ── Camera: fixed orbit, slow auto-rotate — interactive mode off by default ── */
@@ -5233,16 +5266,28 @@ function setupPCB3DExplodedView() {
   }
   window.addEventListener('resize', resizePCB);
 
-  /* ── Render loop ── */
+  /* ── Render loop — robust restart via both IntersectionObserver + ScrollTrigger ── */
   var pcbVisible = false;
+  var pcbAnimRunning = false;
+  var pcbModelShown = false; /* true once GSAP timeline reveals exploded container */
+  function ensurePCBLoop(){
+    if(!pcbAnimRunning && pcbViewerReady && pcbVisible){ pcbAnimRunning=true; animatePCB(); }
+  }
+  function tryHideLoader(){
+    if(pcbViewerReady && pcbModelShown && loadEl && loadEl.style.display!=='none'){
+      loadEl.style.transition='opacity 0.4s ease';
+      loadEl.style.opacity='0';
+      setTimeout(function(){ loadEl.style.display='none'; },400);
+    }
+  }
   new IntersectionObserver(function(e){
     pcbVisible = e[0].isIntersecting;
-    if(pcbVisible && pcbViewerReady) animatePCB();
+    if(pcbVisible) ensurePCBLoop();
   }).observe(section);
 
   function animatePCB(){
-    if(pcbVisible) requestAnimationFrame(animatePCB);
-    if(!pcbViewerReady) return;
+    if(!pcbVisible || !pcbViewerReady){ pcbAnimRunning=false; return; }
+    requestAnimationFrame(animatePCB);
 
     /* Slow auto-rotate (pauses during user drag) */
     if(!pcbDragging) pcbTheta += 0.0015;
@@ -5325,8 +5370,6 @@ function setupPCB3DExplodedView() {
 
     pcbRenderer.render(pcbScene, pcbCamera);
   }
-
-  animatePCB();
 }
 </script>
 
