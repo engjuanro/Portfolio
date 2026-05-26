@@ -1696,21 +1696,41 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
   .stat-label{font-size:9px;letter-spacing:2px}
   .stat::after{display:none}
 
-  /* Exploded sections (PCB/PSG) */
-  .exploded-section{overflow:hidden}
-  .exploded-container{width:100vw;height:80vh}
-  .exploded-label{padding:8px 10px;max-width:180px}
-  .exploded-label .label-title{font-size:11px;letter-spacing:1.5px;margin-bottom:4px}
-  .exploded-label .label-spec{font-size:10px;line-height:1.4}
-  .exploded-label .label-num{font-size:8px;padding:2px 6px}
+  /* Exploded sections (PCB/PSG) — NO pinning on mobile */
+  .exploded-section{overflow:hidden;height:auto !important}
+  .exploded-pin{height:auto !important;min-height:auto;position:relative !important}
+  /* Section intro: show as normal block header (not absolute centered) */
+  .section-intro{position:relative !important;top:auto !important;left:auto !important;transform:none !important;padding:40px 16px 20px;opacity:1 !important;pointer-events:auto}
   .section-intro h2{letter-spacing:-1px}
   .section-intro p{font-size:14px;padding:0 16px}
-  .pcb-interact-btn{bottom:12px;right:12px;padding:8px 12px;font-size:9px}
-  #exploded-psg{height:180vh}
+  /* 3D canvas container: show compact on mobile */
+  .exploded-container{width:100vw;height:50vh;opacity:1 !important;visibility:visible !important}
+  /* Labels: stack vertically as info cards (not absolute positioned) */
+  .exploded-label,.pcb3d-label{
+    position:relative !important;opacity:1 !important;visibility:visible !important;
+    margin:8px 16px;display:block !important;
+    left:auto !important;top:auto !important;right:auto !important;bottom:auto !important;
+    padding:10px 14px;max-width:none;pointer-events:auto !important;
+  }
+  .exploded-label .label-title{font-size:12px;letter-spacing:1.5px;margin-bottom:4px}
+  .exploded-label .label-spec{font-size:11px;line-height:1.5}
+  .exploded-label .label-num{font-size:8px;padding:2px 6px}
+  .pcb-interact-btn{display:none !important}
+  .pcb-loader{display:none !important}
+  #exploded-psg{height:auto !important}
+  #exploded-pcb{height:auto !important}
+  /* On mobile, show the exploded content directly (no scroll-driven animation) */
+  .exploded-section [id$="-exploded"]{opacity:1 !important;visibility:visible !important}
+  .exploded-section .exploded-layer{transform:none !important}
+  /* Skills: no pinning — normal horizontal scroll */
+  .skills-section{height:auto !important}
+  /* Fix any ScrollTrigger spacer issues on mobile — never display:none (hides children!) */
+  .pin-spacer{height:auto !important;padding:0 !important}
 
-  /* Skills horizontal scroll */
-  .skills-section{padding:var(--pad-section) 0}
-  .skill-card{flex:0 0 220px;padding:20px}
+  /* Skills — native horizontal scroll on mobile (no GSAP pin) */
+  .skills-section{padding:var(--pad-section) 0;overflow:visible;height:auto !important}
+  .skills-track{overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;padding-bottom:12px;transform:none !important}
+  .skill-card{flex:0 0 220px;padding:20px;scroll-snap-align:start}
   .skill-name{font-size:15px}
   .skill-items{font-size:12px;line-height:1.7}
   .skill-icon{font-size:10px;padding:6px 12px}
@@ -3594,6 +3614,9 @@ function initAnimations() {
     return;
   }
 
+  // Detect mobile — no pinning on phones (causes scroll black-hole)
+  var isMobile = window.matchMedia('(max-width: 768px)').matches;
+
   // Prevent lag-smoothing from stalling animations in background tabs
   gsap.ticker.lagSmoothing(500);
 
@@ -3660,37 +3683,53 @@ function initAnimations() {
     .to('.hero-cta', { opacity:1, y:0, duration:0.5, ease:'power3.out' }, '-=0.2')
     .add(() => {
       // Add parallax AFTER entrance completes — avoids property conflicts
-      ScrollTrigger.create({
-        trigger: '.hero',
-        start: 'top top',
-        end: 'bottom top',
-        scrub: true,
-        animation: gsap.to('.hero h1', { yPercent: -30 })
-      });
-      ScrollTrigger.create({
-        trigger: '.hero',
-        start: '20% top',
-        end: 'bottom top',
-        scrub: true,
-        animation: gsap.to(['.hero-overline','.hero .subtitle','.hero .location-line','.hero-cta'], { yPercent: -20, opacity: 0.3 })
-      });
+      if (!isMobile) {
+        ScrollTrigger.create({
+          trigger: '.hero',
+          start: 'top top',
+          end: 'bottom top',
+          scrub: true,
+          animation: gsap.to('.hero h1', { yPercent: -30 })
+        });
+        ScrollTrigger.create({
+          trigger: '.hero',
+          start: '20% top',
+          end: 'bottom top',
+          scrub: true,
+          animation: gsap.to(['.hero-overline','.hero .subtitle','.hero .location-line','.hero-cta'], { yPercent: -20, opacity: 0.3 })
+        });
+      }
     });
 
   // ── EXPLODED VIEWS ──
-  /* PCB uses 3D Three.js viewer — setup scroll-driven explosion via custom handler */
-  setupPCB3DExplodedView();
+  if (!isMobile) {
+    /* PCB uses 3D Three.js viewer — setup scroll-driven explosion via custom handler */
+    setupPCB3DExplodedView();
 
-  setupExplodedView('psg', {
-    housing: { y:0 },
-    shield: { y:0, scale:1.15 },
-    chamber1: { x:-60, y:-30 },
-    chamber2: { x:60, y:-30 },
-    pipes: { y:20 },
-    pipes2: { x:20 },
-    sensors: { y:-50, x:-20 },
-    sensors2: { y:40, x:30 },
-    display: { y:-60, x:40 }
-  });
+    setupExplodedView('psg', {
+      housing: { y:0 },
+      shield: { y:0, scale:1.15 },
+      chamber1: { x:-60, y:-30 },
+      chamber2: { x:60, y:-30 },
+      pipes: { y:20 },
+      pipes2: { x:20 },
+      sensors: { y:-50, x:-20 },
+      sensors2: { y:40, x:30 },
+      display: { y:-60, x:40 }
+    });
+  } else {
+    /* MOBILE: Show exploded content immediately — no pin, no scroll-driven animation */
+    ['pcb','psg'].forEach(function(name){
+      var intro = document.getElementById(name + '-intro');
+      var exploded = document.getElementById(name + '-exploded');
+      var labels = document.querySelectorAll('#exploded-' + name + ' .exploded-label, #exploded-' + name + ' .pcb3d-label');
+      if (intro) gsap.set(intro, { opacity:0, display:'none' });
+      if (exploded) gsap.set(exploded, { opacity:1, visibility:'visible' });
+      labels.forEach(function(l){ gsap.set(l, { opacity:1 }); });
+    });
+    /* Start PCB 3D render loop on mobile even without scroll pin */
+    if (typeof setupPCB3DRenderOnly === 'function') setupPCB3DRenderOnly();
+  }
 
   // ── STATS COUNTER ──
   document.querySelectorAll('.stat-number').forEach(el => {
@@ -3738,21 +3777,24 @@ function initAnimations() {
   const skillsTrack = document.getElementById('skillsTrack');
   const skillsSection = document.getElementById('skills');
   if (skillsTrack && skillsSection) {
-    const totalScroll = skillsTrack.scrollWidth - window.innerWidth + 80;
-    if (totalScroll > 0) {
-      gsap.to(skillsTrack, {
-        x: -totalScroll,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: skillsSection,
-          start: 'top top',
-          end: '+=' + totalScroll,
-          scrub: 1,
-          pin: true,
-          anticipatePin: 1
-        }
-      });
+    if (!isMobile) {
+      const totalScroll = skillsTrack.scrollWidth - window.innerWidth + 80;
+      if (totalScroll > 0) {
+        gsap.to(skillsTrack, {
+          x: -totalScroll,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: skillsSection,
+            start: 'top top',
+            end: '+=' + totalScroll,
+            scrub: 1,
+            pin: true,
+            anticipatePin: 1
+          }
+        });
+      }
     }
+    /* On mobile, skills track is a native horizontal scroll container — no pin needed */
   }
 
   // ── TIMELINE ITEMS ──
@@ -5391,6 +5433,15 @@ window.addEventListener('start3DViewer', function pcb3DCardInit(evt){
    scroll-only explosion, NO user interaction (no drag/zoom).
    Same render pipeline as robot arm viewer (ACES, 5-point lighting).
    ═══════════════════════════════════════════ */
+/* Mobile: just start 3D render without scroll-driven animation.
+   This is a no-op placeholder — on mobile the PCB 3D canvas is visible via CSS
+   but we skip loading the heavy 3D model to save bandwidth/battery.
+   The PCB labels are shown as info cards instead. */
+function setupPCB3DRenderOnly() {
+  var canvas = document.getElementById('pcb3dCanvas');
+  if (canvas) canvas.style.display = 'none'; /* Hide empty canvas on mobile */
+}
+
 function setupPCB3DExplodedView() {
   var section = document.getElementById('exploded-pcb');
   var pin     = document.getElementById('pcb-pin');
