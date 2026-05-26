@@ -358,7 +358,7 @@ nav a:focus-visible{outline:2px solid #4fc3f7;outline-offset:3px;border-radius:4
   content:'';position:absolute;top:50%;left:50%;
   transform:translate(-50%,-50%);
   width:65%;height:70%;border-radius:50%;
-  background:radial-gradient(ellipse at center, rgba(6,94,34,0.12) 0%, rgba(79,195,247,0.04) 40%, transparent 70%);
+  background:radial-gradient(ellipse at center, rgba(10,122,53,0.18) 0%, rgba(79,195,247,0.06) 40%, transparent 70%);
   pointer-events:none;z-index:0;
   filter:blur(40px);
 }
@@ -4953,10 +4953,12 @@ function setupPCB3DExplodedView() {
     scrollTrigger: {
       trigger: section,
       start: 'top top',
-      end: '+=450%',
+      end: '+=650%',
       scrub: 0.8,
       pin: pin,
       anticipatePin: 1,
+      onLeave: function(){ exploded.style.visibility='hidden'; exploded.style.pointerEvents='none'; },
+      onEnterBack: function(){ exploded.style.visibility='visible'; exploded.style.pointerEvents='auto'; },
     }
   });
 
@@ -4978,11 +4980,16 @@ function setupPCB3DExplodedView() {
   /* Hold for reading */
   tl.to({}, { duration:0.12 });
 
-  /* Phase 4: Fade out completely — long enough so labels clear before Robotics */
-  tl.to(pcbExplosion, { wave2:0, wave1:0, duration:0.06 });
-  tl.to(exploded, { opacity:0, duration:0.06, ease:'power2.in' });
+  /* Phase 4: Fade out completely — extra long so labels fully clear before Robotics */
+  tl.to(pcbExplosion, { wave2:0, wave1:0, duration:0.08 });
+  tl.to(exploded, { opacity:0, duration:0.08, ease:'power2.in',
+    onComplete: function(){ exploded.style.visibility='hidden'; },
+    onReverseComplete: function(){ exploded.style.visibility='visible'; }
+  });
+  /* Force-hide all labels individually too */
+  tl.to(labels, { opacity:0, visibility:'hidden', duration:0.01 });
   tl.to(intro, { opacity:0, duration:0.01 }); /* ensure intro stays hidden */
-  tl.to({}, { duration:0.12 }); /* generous dead space before robotics section */
+  tl.to({}, { duration:0.25 }); /* very generous dead space before robotics section */
 
   /* ── Viewer state ── */
   var pcbViewerReady = false;
@@ -5057,25 +5064,29 @@ function setupPCB3DExplodedView() {
     var fillLight = new THREE.DirectionalLight(0x90a8c8, 0.4);
     fillLight.position.set(-400, 200, 300);
     pcbScene.add(fillLight);
-    var rimLight = new THREE.DirectionalLight(0x4fc3f7, 0.5);
+    var rimLight = new THREE.DirectionalLight(0x4fc3f7, 0.6);
     rimLight.position.set(-100, -500, 200);
     pcbScene.add(rimLight);
-    var topLight = new THREE.DirectionalLight(0xffeedd, 0.3);
+    var topLight = new THREE.DirectionalLight(0xfff5e0, 0.4);
     topLight.position.set(0, 0, 800);
     pcbScene.add(topLight);
+    /* Subtle green fill from below to enhance FR4 board glow */
+    var greenFill = new THREE.DirectionalLight(0x22cc66, 0.15);
+    greenFill.position.set(0, 0, -400);
+    pcbScene.add(greenFill);
 
-    /* ── Materials — darker base colors to survive ACES bloom, DoubleSide to fill gaps ── */
+    /* ── Materials — richer colors, ACES-safe, DoubleSide to fill gaps ── */
     var pcbMats = [
-      /* PCB_Board — deep GREEN FR4 (dark so ACES doesn't wash it out) */
-      new THREE.MeshStandardMaterial({color:0x065e22, metalness:0.08, roughness:0.6, side:THREE.DoubleSide}),
-      /* Passives — dark charcoal SMD bodies */
-      new THREE.MeshStandardMaterial({color:0x222222, metalness:0.3, roughness:0.5, side:THREE.DoubleSide}),
-      /* ICs — black epoxy packages */
-      new THREE.MeshStandardMaterial({color:0x121218, metalness:0.4, roughness:0.3, side:THREE.DoubleSide}),
-      /* Connectors — muted silver metal */
-      new THREE.MeshStandardMaterial({color:0x667788, metalness:0.8, roughness:0.15, side:THREE.DoubleSide}),
-      /* Tall_Components — dark gunmetal */
-      new THREE.MeshStandardMaterial({color:0x2e3e4e, metalness:0.6, roughness:0.35, side:THREE.DoubleSide})
+      /* PCB_Board — rich emerald-green FR4 with subtle sheen */
+      new THREE.MeshStandardMaterial({color:0x0a7a35, metalness:0.12, roughness:0.50, side:THREE.DoubleSide, emissive:0x021a08, emissiveIntensity:0.15}),
+      /* Passives — warm dark brown ceramic bodies (realistic SMD look) */
+      new THREE.MeshStandardMaterial({color:0x3a2e28, metalness:0.25, roughness:0.55, side:THREE.DoubleSide}),
+      /* ICs — deep black with subtle blue-purple sheen (epoxy mold compound) */
+      new THREE.MeshStandardMaterial({color:0x1a1a24, metalness:0.45, roughness:0.25, side:THREE.DoubleSide, emissive:0x060610, emissiveIntensity:0.1}),
+      /* Connectors — bright brushed nickel (pin headers, USB, etc.) */
+      new THREE.MeshStandardMaterial({color:0x8899aa, metalness:0.88, roughness:0.12, side:THREE.DoubleSide}),
+      /* Tall_Components — anodized aluminum / heatsink silver */
+      new THREE.MeshStandardMaterial({color:0x556677, metalness:0.75, roughness:0.28, side:THREE.DoubleSide})
     ];
 
     /* ── Load real STL geometry from pcb-geom.js ── */
@@ -5195,9 +5206,15 @@ function setupPCB3DExplodedView() {
       g.position.z = g.userData.baseZ + g.userData.explosionZ * p;
     });
 
-    /* Update label opacity per wave */
-    pcbWave1Labels.forEach(function(lbl){ lbl.style.opacity = pcbExplosion.wave1; });
-    pcbWave2Labels.forEach(function(lbl){ lbl.style.opacity = pcbExplosion.wave2; });
+    /* Update label opacity per wave — also toggle visibility to prevent ghost overlap */
+    pcbWave1Labels.forEach(function(lbl){
+      lbl.style.opacity = pcbExplosion.wave1;
+      lbl.style.visibility = pcbExplosion.wave1 > 0.01 ? 'visible' : 'hidden';
+    });
+    pcbWave2Labels.forEach(function(lbl){
+      lbl.style.opacity = pcbExplosion.wave2;
+      lbl.style.visibility = pcbExplosion.wave2 > 0.01 ? 'visible' : 'hidden';
+    });
     var maxWave = Math.max(pcbExplosion.wave1, pcbExplosion.wave2);
     if(pcbLineSVG) pcbLineSVG.style.opacity = maxWave;
 
