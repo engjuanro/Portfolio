@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Production Analytics Dashboard — Juan Rodriguez</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0e14;color:#e0e6ed;min-height:100vh}
+  .header{background:linear-gradient(135deg,#0d1117 0%,#141c28 100%);border-bottom:1px solid #1a2a3a;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  .header h1{font-size:18px;font-weight:600;color:#4fc3f7;letter-spacing:0.5px}
+  .header .meta{font-size:13px;color:#8899aa;display:flex;gap:20px;align-items:center}
+  .header .live-dot{width:8px;height:8px;background:#4caf50;border-radius:50%;display:inline-block;animation:pulse 2s infinite;margin-right:4px}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+  .filters{background:#0d1117;border-bottom:1px solid #1a2a3a;padding:10px 32px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .filters label{font-size:12px;color:#8899aa;text-transform:uppercase;letter-spacing:0.5px}
+  .filters select,.filters input{background:#141c28;border:1px solid #1a2a3a;color:#e0e6ed;padding:6px 12px;border-radius:6px;font-size:13px;outline:none}
+  .filters select:focus,.filters input:focus{border-color:#4fc3f7}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:24px 32px}
+  .kpi-card{background:linear-gradient(145deg,#111820,#0d1117);border:1px solid #1a2a3a;border-radius:12px;padding:20px;position:relative;overflow:hidden}
+  .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0}
+  .kpi-card.green::before{background:#4caf50}
+  .kpi-card.blue::before{background:#4fc3f7}
+  .kpi-card.orange::before{background:#ff9800}
+  .kpi-card.red::before{background:#f44336}
+  .kpi-label{font-size:11px;color:#8899aa;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+  .kpi-value{font-size:32px;font-weight:700;line-height:1.1}
+  .kpi-card.green .kpi-value{color:#4caf50}
+  .kpi-card.blue .kpi-value{color:#4fc3f7}
+  .kpi-card.orange .kpi-value{color:#ff9800}
+  .kpi-card.red .kpi-value{color:#f44336}
+  .kpi-sub{font-size:12px;color:#8899aa;margin-top:6px;display:flex;align-items:center;gap:4px}
+  .kpi-sub .up{color:#4caf50}
+  .kpi-sub .down{color:#f44336}
+  .chart-row{display:grid;grid-template-columns:2fr 1fr;gap:16px;padding:0 32px 16px}
+  .chart-row.equal{grid-template-columns:1fr 1fr}
+  .chart-box{background:linear-gradient(145deg,#111820,#0d1117);border:1px solid #1a2a3a;border-radius:12px;padding:20px}
+  .chart-box h3{font-size:14px;font-weight:600;color:#c8d8e8;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .chart-box h3 .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .chart-container{position:relative;width:100%;height:260px}
+  .table-wrap{overflow-x:auto;margin-top:8px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;padding:8px 12px;background:#0d1117;color:#8899aa;text-transform:uppercase;font-size:11px;letter-spacing:0.5px;border-bottom:1px solid #1a2a3a}
+  td{padding:8px 12px;border-bottom:1px solid #0f1820;color:#c8d8e8}
+  tr:hover td{background:#141c28}
+  .status{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;text-transform:uppercase}
+  .status.running{background:rgba(76,175,80,0.15);color:#4caf50}
+  .status.idle{background:rgba(255,152,0,0.15);color:#ff9800}
+  .status.down{background:rgba(244,67,54,0.15);color:#f44336}
+  .status.maint{background:rgba(79,195,247,0.15);color:#4fc3f7}
+  .footer{text-align:center;padding:20px;color:#556677;font-size:12px;border-top:1px solid #1a2a3a;margin-top:8px}
+  @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.chart-row,.chart-row.equal{grid-template-columns:1fr}}
+  @media(max-width:500px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>PRODUCTION ANALYTICS DASHBOARD</h1>
+  <div class="meta">
+    <span><span class="live-dot"></span> Live — Shift B</span>
+    <span>Plant: Chicago IL — Line 3</span>
+    <span id="clock"></span>
+  </div>
+</div>
+
+<div class="filters">
+  <label>Line</label>
+  <select id="lineFilter" onchange="updateDashboard()">
+    <option>Line 3 — Pasteurizer</option>
+    <option>Line 1 — CIP Module</option>
+    <option>Line 2 — Mixer/Blender</option>
+    <option>Line 4 — Packaging</option>
+  </select>
+  <label>Shift</label>
+  <select id="shiftFilter" onchange="updateDashboard()">
+    <option>Shift B (14:00–22:00)</option>
+    <option>Shift A (06:00–14:00)</option>
+    <option>Shift C (22:00–06:00)</option>
+  </select>
+  <label>Date</label>
+  <input type="date" value="2026-04-25" onchange="updateDashboard()">
+</div>
+
+<!-- KPI Cards -->
+<div class="grid">
+  <div class="kpi-card green">
+    <div class="kpi-label">OEE — Overall Equipment Effectiveness</div>
+    <div class="kpi-value" id="oeeVal">87.3%</div>
+    <div class="kpi-sub"><span class="up">▲ 2.1%</span> vs. last shift</div>
+  </div>
+  <div class="kpi-card blue">
+    <div class="kpi-label">Throughput (units/hr)</div>
+    <div class="kpi-value" id="throughputVal">1,248</div>
+    <div class="kpi-sub"><span class="up">▲ 5.4%</span> vs. target 1,200</div>
+  </div>
+  <div class="kpi-card orange">
+    <div class="kpi-label">Defect Rate (PPM)</div>
+    <div class="kpi-value" id="defectVal">342</div>
+    <div class="kpi-sub"><span class="down">▼ 18 PPM</span> vs. last week avg</div>
+  </div>
+  <div class="kpi-card red">
+    <div class="kpi-label">Unplanned Downtime</div>
+    <div class="kpi-value" id="downtimeVal">12 min</div>
+    <div class="kpi-sub">Target: &lt;15 min/shift — <span class="up">ON TARGET</span></div>
+  </div>
+</div>
+
+<!-- Charts Row 1 -->
+<div class="chart-row">
+  <div class="chart-box">
+    <h3><span class="dot" style="background:#4fc3f7"></span>Production Throughput — 8-Hour Trend</h3>
+    <div class="chart-container"><canvas id="throughputChart"></canvas></div>
+  </div>
+  <div class="chart-box">
+    <h3><span class="dot" style="background:#ff9800"></span>Downtime Pareto (minutes)</h3>
+    <div class="chart-container"><canvas id="paretoChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Charts Row 2 -->
+<div class="chart-row equal">
+  <div class="chart-box">
+    <h3><span class="dot" style="background:#4caf50"></span>OEE Breakdown — Availability × Performance × Quality</h3>
+    <div class="chart-container"><canvas id="oeeChart"></canvas></div>
+  </div>
+  <div class="chart-box">
+    <h3><span class="dot" style="background:#f44336"></span>Defect Classification — Shift B</h3>
+    <div class="chart-container"><canvas id="defectChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Equipment Status Table -->
+<div style="padding:0 32px 16px">
+  <div class="chart-box">
+    <h3><span class="dot" style="background:#4caf50"></span>Equipment Status — Real-Time</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Equipment</th><th>Status</th><th>Speed (RPM/Hz)</th><th>Temp (°C)</th><th>VFD Load (%)</th><th>Runtime (hrs)</th><th>Next PM</th></tr>
+        </thead>
+        <tbody id="equipTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- OEE Weekly Trend -->
+<div style="padding:0 32px 16px">
+  <div class="chart-box">
+    <h3><span class="dot" style="background:#4fc3f7"></span>OEE Weekly Trend — All Lines</h3>
+    <div class="chart-container" style="height:220px"><canvas id="weeklyChart"></canvas></div>
+  </div>
+</div>
+
+<div class="footer">
+  Dashboard built by Juan Rodriguez — Production Analytics & MES Integration<br>
+  Data sources: CompactLogix PLC → MQTT → PostgreSQL → Grafana/Tableau | Automated ETL every 10s
+</div>
+
+<script>
+// Clock
+function updateClock(){
+  var now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateClock,1000);
+updateClock();
+
+// Chart.js defaults
+Chart.defaults.color = '#8899aa';
+Chart.defaults.borderColor = '#1a2a3a';
+Chart.defaults.font.family = "'Segoe UI',system-ui,sans-serif";
+Chart.defaults.font.size = 11;
+
+// Throughput chart
+var hours = ['14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'];
+var throughputData = [1180,1220,1290,1310,1248,1275,1190,1260];
+var targetData = [1200,1200,1200,1200,1200,1200,1200,1200];
+
+new Chart(document.getElementById('throughputChart'),{
+  type:'line',
+  data:{
+    labels:hours,
+    datasets:[
+      {label:'Actual',data:throughputData,borderColor:'#4fc3f7',backgroundColor:'rgba(79,195,247,0.1)',fill:true,tension:0.3,pointRadius:4,pointBackgroundColor:'#4fc3f7',borderWidth:2},
+      {label:'Target',data:targetData,borderColor:'#ff9800',borderDash:[6,4],borderWidth:1.5,pointRadius:0,fill:false}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:16}}},scales:{y:{beginAtZero:false,min:1100,grid:{color:'#0f1820'}}}}
+});
+
+// Pareto chart
+new Chart(document.getElementById('paretoChart'),{
+  type:'bar',
+  data:{
+    labels:['VFD Fault','Sensor Cal','CIP Cycle','Material','Changeover'],
+    datasets:[{label:'Minutes',data:[4.2,3.1,2.5,1.4,0.8],backgroundColor:['#f44336','#ff9800','#ffca28','#4fc3f7','#4caf50'],borderRadius:4,barThickness:28}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'#0f1820'}}}}
+});
+
+// OEE Breakdown
+new Chart(document.getElementById('oeeChart'),{
+  type:'bar',
+  data:{
+    labels:['Availability','Performance','Quality','OEE'],
+    datasets:[{
+      label:'%',
+      data:[94.2,96.1,96.3,87.3],
+      backgroundColor:['#4caf50','#4fc3f7','#ff9800','rgba(79,195,247,0.3)'],
+      borderColor:['#4caf50','#4fc3f7','#ff9800','#4fc3f7'],
+      borderWidth:[0,0,0,2],
+      borderDash:[0,0,0,0],
+      barThickness:48,
+      borderRadius:6
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:function(c){return c.raw+'%'}}}
+    },
+    scales:{y:{min:70,max:100,grid:{color:'#0f1820'},ticks:{callback:function(v){return v+'%'}}},x:{grid:{display:false}}}
+  }
+});
+
+// Defect classification donut
+new Chart(document.getElementById('defectChart'),{
+  type:'doughnut',
+  data:{
+    labels:['Seal Integrity','Fill Volume','Label Offset','Contamination','Other'],
+    datasets:[{
+      data:[38,27,18,12,5],
+      backgroundColor:['#f44336','#ff9800','#ffca28','#4fc3f7','#556677'],
+      borderColor:'#0a0e14',
+      borderWidth:3
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'right',labels:{usePointStyle:true,padding:12,font:{size:12}}}}
+  }
+});
+
+// Equipment table
+var equipment = [
+  {name:'Pasteurizer HX-301',status:'running',speed:'—',temp:'72.4',vfd:'78',runtime:'6.2',pm:'Apr 30'},
+  {name:'CIP Skid CIP-101',status:'idle',speed:'—',temp:'85.1',vfd:'—',runtime:'1.8',pm:'May 05'},
+  {name:'Homogenizer HG-201',status:'running',speed:'3,450',temp:'65.2',vfd:'82',runtime:'5.9',pm:'May 02'},
+  {name:'Fill/Seal FS-401',status:'running',speed:'—',temp:'22.1',vfd:'64',runtime:'6.1',pm:'Apr 28'},
+  {name:'Conveyor CV-501',status:'running',speed:'—',temp:'—',vfd:'45',runtime:'6.2',pm:'May 10'},
+  {name:'Mixer MX-102',status:'maint',speed:'—',temp:'—',vfd:'—',runtime:'0',pm:'Today'},
+  {name:'VFD Drive PF-525 #3',status:'running',speed:'48.2 Hz',temp:'41.3',vfd:'71',runtime:'6.2',pm:'May 15'},
+  {name:'Pump P-201 (CIP Return)',status:'idle',speed:'—',temp:'—',vfd:'32',runtime:'1.8',pm:'May 08'}
+];
+var tbody = document.getElementById('equipTable');
+equipment.forEach(function(eq){
+  var statusClass = eq.status;
+  var statusLabel = eq.status === 'maint' ? 'PM' : eq.status.charAt(0).toUpperCase()+eq.status.slice(1);
+  tbody.innerHTML += '<tr><td><strong>'+eq.name+'</strong></td><td><span class="status '+statusClass+'">'+statusLabel+'</span></td><td>'+eq.speed+'</td><td>'+eq.temp+'</td><td>'+eq.vfd+'</td><td>'+eq.runtime+'</td><td>'+eq.pm+'</td></tr>';
+});
+
+// Weekly OEE trend
+new Chart(document.getElementById('weeklyChart'),{
+  type:'line',
+  data:{
+    labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+    datasets:[
+      {label:'Line 1 — CIP',data:[82.1,83.5,85.2,84.8,86.1,83.0,84.5],borderColor:'#f44336',borderWidth:2,pointRadius:3,tension:0.3,fill:false},
+      {label:'Line 2 — Mixer',data:[88.3,87.1,89.5,90.2,88.8,87.5,89.1],borderColor:'#ff9800',borderWidth:2,pointRadius:3,tension:0.3,fill:false},
+      {label:'Line 3 — Pasteurizer',data:[85.4,86.2,87.8,86.5,88.1,87.3,87.3],borderColor:'#4fc3f7',borderWidth:2,pointRadius:3,tension:0.3,fill:false},
+      {label:'Line 4 — Packaging',data:[91.2,90.8,92.1,91.5,90.3,89.7,91.0],borderColor:'#4caf50',borderWidth:2,pointRadius:3,tension:0.3,fill:false},
+      {label:'Target',data:[85,85,85,85,85,85,85],borderColor:'#556677',borderDash:[6,4],borderWidth:1,pointRadius:0,fill:false}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{usePointStyle:true,padding:14}}},scales:{y:{min:75,max:95,grid:{color:'#0f1820'},ticks:{callback:function(v){return v+'%'}}},x:{grid:{display:false}}}}
+});
+
+function updateDashboard(){
+  // Simulate data change on filter
+  var oee = (84 + Math.random()*6).toFixed(1);
+  var tp = Math.round(1150 + Math.random()*150);
+  var def = Math.round(280 + Math.random()*120);
+  var dt = Math.round(5 + Math.random()*20);
+  document.getElementById('oeeVal').textContent = oee+'%';
+  document.getElementById('throughputVal').textContent = tp.toLocaleString();
+  document.getElementById('defectVal').textContent = def;
+  document.getElementById('downtimeVal').textContent = dt+' min';
+}
+</script>
+</body>
+</html>
