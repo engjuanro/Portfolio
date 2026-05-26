@@ -5298,7 +5298,8 @@ function setupPCB3DExplodedView() {
         if(xhr.status === 200 || xhr.status === 0){
           if(pcbBarFill) pcbBarFill.style.width = '100%';
           if(pcbPctEl) pcbPctEl.textContent = '100%';
-          try { new Function(xhr.responseText)(); } catch(e){ console.error('PCB geom parse error',e); }
+          /* Use indirect eval to run in global scope so var PCB_GEOM becomes window.PCB_GEOM */
+          try { (0,eval)(xhr.responseText); } catch(e){ console.error('PCB geom parse error',e); }
           cb();
         } else {
           if(loadEl) loadEl.querySelector('.pcb-loader-text').textContent='Load failed — refresh';
