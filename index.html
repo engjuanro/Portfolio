@@ -2642,6 +2642,7 @@ const PORTFOLIO_DATA = {
       id: 'pcb',
       category: 'Hardware Design &mdash; Custom Multi-layer PCB',
       title: 'PCB Engineering Portfolio &mdash; Industrial, Biomedical &amp; IoT Boards',
+      has3DViewer: true,
       desc: 'Designed multi-layer industrial and biomedical PCBs from schematic capture through DFM review to production. <strong>Altium Designer</strong> for final layouts, <strong>KiCad</strong> and <strong>Eagle</strong> for rapid prototyping, full deliverables on every board (schematic, PCB layout, BOM, Gerber, STEP). Highlights include the <strong>Ethernet MSP432MCU LaunchPad development</strong> from Texas Instruments &mdash; multilayer PCB design with technical specifications required by the customer for mass production of <strong>racing drones</strong> &mdash; and a <strong>UAV/drone prototype board</strong> integrating accelerometers, gyroscope, MEMS-technology compass, GPS, and RF module with certified surface-mount components, full simulation and 3D design, and BOM consolidating 3 component distributors. Other boards span patent-pending wide-input 9-36V industrial field controllers (RS-485 Modbus RTU + 4-20mA analog I/O), biomedical signal acquisition front-ends (ADS1299, RHS2116) for sub-microvolt biopotential measurement, and custom servo-driver boards for the 6-DOF manipulator. Every board passes EMI/EMC compliance, thermal dissipation analysis, and impedance-controlled stackup validation per IPC-2221 and IEC standards.',
       tags: ['Altium Designer','KiCad','Eagle','Multi-layer Stackup','EMI/EMC Compliance','DFM Review','IPC-2221','Schematic + PCB + BOM + Gerber + STEP','STM32F4','MSP432 LaunchPad','UAV / Racing Drone','GPS + IMU + RF Sensor Fusion','Biomedical AFE','Industrial 9-36V'],
       featured: true,
@@ -2649,6 +2650,7 @@ const PORTFOLIO_DATA = {
         // VIDEOS - Altium 3D walkthrough demos (most impactful first)
         'videos/11_PCB/pcb-drone-altium-3d.mp4',
         'videos/11_PCB/pcb-eeg-altium-3d.mp4',
+        '__3D_MODEL_CTA__',
         // LinkedIn featured PCBs (MSP432 + drone prototypes)
         'images/11_PCB/linkedin-01-msp432-ethernet-launchpad.jpg',
         'images/11_PCB/linkedin-02-msp432-multilayer-altium.jpg',
@@ -2924,8 +2926,9 @@ function renderProjects() {
     const isCTA = (u) => typeof u === 'string' && u.startsWith('__3D_MODEL_CTA');
     if (p.has3DViewer && imgs.length) {
       const realMedia = imgs.filter(u => !isCTA(u));
-      const viewerId = p.id === 'robot-custom' ? 'robot3d' : 'ind3d';
+      const viewerId = p.id === 'robot-custom' ? 'robot3d' : p.id === 'pcb' ? 'pcb3dCard' : 'ind3d';
       if(p.id === 'robot-custom') window.__robotMedia = realMedia;
+      if(p.id === 'pcb') window.__pcbMedia = realMedia;
       imageBlock = `<div style="position:relative;width:100%;height:100%">
         <div class="project-gallery" data-gallery id="${viewerId}Gallery">
           ${imgs.map((u, idx) => {
@@ -4517,6 +4520,25 @@ document.addEventListener('click', function(e){
   }
 }, false);
 
+/* ── PCB Gallery: expand button & slide-click → lightbox (event delegation) ── */
+document.addEventListener('click', function(e){
+  var gallery = document.getElementById('pcb3dCardGallery');
+  if(!gallery || !gallery.contains(e.target)) return;
+  if(e.target.closest('[data-nav]') || e.target.closest('.gallery-dots') ||
+     e.target.closest('.viewer-3d-toggle') || e.target.closest('[data-trigger3d]')) return;
+  var mediaList = window.__pcbMedia;
+  if(!mediaList || !mediaList.length) return;
+  var activeSlide = gallery.querySelector('.slide.active');
+  var mediaIdx = activeSlide ? parseInt(activeSlide.dataset.mediaIdx) : 0;
+  if(isNaN(mediaIdx) || mediaIdx < 0) mediaIdx = 0;
+  var isExpand = !!e.target.closest('[data-expand]');
+  var isSlide  = !!e.target.closest('.slide[data-media-idx]');
+  if(isExpand || isSlide){
+    e.stopPropagation(); e.preventDefault();
+    if(window.__lightbox) window.__lightbox.open(mediaList, mediaIdx);
+  }
+}, false);
+
 /* 3D viewer deferred — only init on first toggle click */
 window.addEventListener('start3DViewer', function robot3DInit(evt){
   if(evt.detail && evt.detail.viewerId !== 'robot3d') return; /* Only handle robot viewer */
@@ -4897,6 +4919,242 @@ window.addEventListener('start3DViewer', function ind3DInit(evt){
       renderer.render(scene, camera);
     }
     animate();
+  }
+});
+
+/* ═══════════════════════════════════════════
+   PCB 3D Card Viewer — Interactive exploded PCB inside project card
+   Reuses pcb-geom.js geometry with full explosion + layer labels
+   ═══════════════════════════════════════════ */
+window.addEventListener('start3DViewer', function pcb3DCardInit(evt){
+  if(!evt.detail || evt.detail.viewerId !== 'pcb3dCard') return;
+  window.removeEventListener('start3DViewer', pcb3DCardInit);
+
+  var canvas = document.getElementById('pcb3dCardCanvas');
+  var wrap   = document.getElementById('pcb3dCard-wrap');
+  var loadEl = document.getElementById('pcb3dCardLoading');
+  if(!canvas || !wrap) return;
+
+  /* Load geometry (may already be cached from scroll viewer) */
+  function ensureGeom(cb){
+    if(window.PCB_GEOM) return cb();
+    var sg = document.createElement('script');
+    sg.src = 'models/kircad egg/pcb-geom.js';
+    sg.onload = cb;
+    sg.onerror = function(){ if(loadEl){ loadEl.textContent='Could not load PCB geometry'; } };
+    document.head.appendChild(sg);
+  }
+  function ensureThree(cb){
+    if(window.THREE) return cb();
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+    s.onload = cb;
+    document.head.appendChild(s);
+  }
+  ensureGeom(function(){ ensureThree(startPCBCardViewer); });
+
+  function startPCBCardViewer(){
+    function b64ToF32(b64){
+      var bin = atob(b64), len = bin.length, bytes = new Uint8Array(len);
+      for(var i=0;i<len;i++) bytes[i] = bin.charCodeAt(i);
+      return new Float32Array(bytes.buffer);
+    }
+
+    var renderer = new THREE.WebGLRenderer({canvas:canvas, antialias:true, alpha:false, powerPreference:'high-performance'});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.85;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.setClearColor(0x0a0e14, 1);
+
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(35, 1, 1, 8000);
+    camera.up.set(0, 0, 1);
+
+    /* Studio lighting — brighter than scroll version for card visibility */
+    scene.add(new THREE.HemisphereLight(0xc8d8f0, 0x222218, 0.5));
+    var keyLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    keyLight.position.set(300, 400, 500);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024);
+    keyLight.shadow.camera.near = 10; keyLight.shadow.camera.far = 2000;
+    keyLight.shadow.camera.left = -400; keyLight.shadow.camera.right = 400;
+    keyLight.shadow.camera.top = 400; keyLight.shadow.camera.bottom = -400;
+    scene.add(keyLight);
+    var fill = new THREE.DirectionalLight(0xb0c8e8, 0.35);
+    fill.position.set(-400, 200, 300); scene.add(fill);
+    var rim = new THREE.DirectionalLight(0x4fc3f7, 0.5);
+    rim.position.set(-100, -500, 200); scene.add(rim);
+    var top = new THREE.DirectionalLight(0xffeedd, 0.25);
+    top.position.set(0, 0, 800); scene.add(top);
+
+    /* Ground plane */
+    var ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(1500, 1500),
+      new THREE.MeshStandardMaterial({color:0x0c1018, roughness:0.9, metalness:0.0})
+    );
+    ground.receiveShadow = true;
+    scene.add(ground);
+    var gridH = new THREE.GridHelper(800, 40, 0x1a2a3a, 0x0f1820);
+    gridH.rotation.x = Math.PI/2;
+    scene.add(gridH);
+
+    /* PCB Materials — same as scroll viewer but slightly brighter */
+    var pcbMats = [
+      new THREE.MeshStandardMaterial({color:0x043010, metalness:0.10, roughness:0.70, side:THREE.DoubleSide}),
+      new THREE.MeshStandardMaterial({color:0x2a2420, metalness:0.20, roughness:0.55, side:THREE.DoubleSide}),
+      new THREE.MeshStandardMaterial({color:0x141418, metalness:0.40, roughness:0.25, side:THREE.DoubleSide}),
+      new THREE.MeshStandardMaterial({color:0x778899, metalness:0.85, roughness:0.15, side:THREE.DoubleSide}),
+      new THREE.MeshStandardMaterial({color:0x3a4a5a, metalness:0.70, roughness:0.28, side:THREE.DoubleSide})
+    ];
+
+    /* Build geometry */
+    var SCALE = 120;
+    var pcbRoot = new THREE.Group();
+    scene.add(pcbRoot);
+    var explosionOffsets = [0, 55, 115, 180, 250];
+    var groups = [];
+
+    window.PCB_GEOM.forEach(function(part, idx){
+      var posArr = b64ToF32(part.pos);
+      var nrmArr = b64ToF32(part.nrm);
+      var scaledPos = new Float32Array(posArr.length);
+      for(var i=0; i<posArr.length; i++) scaledPos[i] = posArr[i] * SCALE;
+      var geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(scaledPos, 3));
+      geo.setAttribute('normal', new THREE.BufferAttribute(nrmArr, 3));
+      var mesh = new THREE.Mesh(geo, pcbMats[idx] || pcbMats[0]);
+      mesh.castShadow = true; mesh.receiveShadow = true;
+      var grp = new THREE.Group();
+      grp.add(mesh);
+      grp.userData.explosionZ = explosionOffsets[idx] || 0;
+      grp.userData.baseZ = 0;
+      pcbRoot.add(grp);
+      groups.push(grp);
+    });
+
+    /* Center */
+    var box = new THREE.Box3().setFromObject(pcbRoot);
+    var center = box.getCenter(new THREE.Vector3());
+    pcbRoot.position.set(-center.x, -center.y, -center.z);
+
+    /* Position ground */
+    var minZ = box.min.z - center.z;
+    ground.position.z = minZ - 10;
+    gridH.position.z = minZ - 9;
+
+    /* Save base positions and cache centers for label projection */
+    groups.forEach(function(g){
+      g.userData.baseZ = g.position.z;
+      var b = new THREE.Box3().setFromObject(g);
+      g.userData.cachedCenter = b.getCenter(new THREE.Vector3());
+    });
+
+    if(loadEl) loadEl.classList.add('hidden');
+
+    /* Camera orbit */
+    var theta = Math.PI * 0.25, phi = Math.PI * 0.28, radius = 750;
+    var isDrag = false, lastX = 0, lastY = 0, autoRotate = true;
+    var target = new THREE.Vector3(0, 0, 40);
+
+    /* Animated explosion — auto-cycles through layers */
+    var explosionTime = 0;
+    var explosionSpeed = 0.004;
+
+    /* Prevent events from reaching card gallery */
+    wrap.addEventListener('mousedown', function(e){ e.stopPropagation(); });
+    wrap.addEventListener('click', function(e){ e.stopPropagation(); });
+    wrap.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {passive:false});
+    canvas.addEventListener('mousedown', function(e){ e.stopPropagation(); isDrag=true; autoRotate=false; lastX=e.clientX; lastY=e.clientY; });
+    canvas.addEventListener('mousemove', function(e){ if(!isDrag)return; theta-=(e.clientX-lastX)*0.008; phi=Math.max(0.15,Math.min(Math.PI*0.48,phi-(e.clientY-lastY)*0.008)); lastX=e.clientX; lastY=e.clientY; });
+    window.addEventListener('mouseup', function(){ isDrag=false; });
+    canvas.addEventListener('touchstart', function(e){ e.preventDefault(); e.stopPropagation(); isDrag=true; autoRotate=false; lastX=e.touches[0].clientX; lastY=e.touches[0].clientY; },{passive:false});
+    canvas.addEventListener('touchmove', function(e){ e.preventDefault(); if(!isDrag)return; theta-=(e.touches[0].clientX-lastX)*0.008; phi=Math.max(0.15,Math.min(Math.PI*0.48,phi-(e.touches[0].clientY-lastY)*0.008)); lastX=e.touches[0].clientX; lastY=e.touches[0].clientY; },{passive:false});
+    canvas.addEventListener('touchend', function(){ isDrag=false; });
+    canvas.addEventListener('wheel', function(e){ e.preventDefault(); e.stopPropagation(); radius=Math.max(350,Math.min(1200,radius+e.deltaY*0.8)); },{passive:false});
+
+    function resize(){
+      var w=wrap.clientWidth, h=wrap.clientHeight;
+      if(w>0 && h>0){ renderer.setSize(w,h); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+    }
+    setTimeout(resize, 100);
+    window.addEventListener('resize', resize);
+
+    /* HTML overlay labels for layers */
+    var labelData = [
+      {name:'Power & EMC', color:'#69f0ae', idx:1},
+      {name:'Galvanic Isolation', color:'#80cbc4', idx:2},
+      {name:'Communication', color:'#4fc3f7', idx:3},
+      {name:'Acquisition & DSP', color:'#ff8a65', idx:4},
+      {name:'PSG Frontend', color:'#ce93d8', idx:0}
+    ];
+    var labelContainer = document.createElement('div');
+    labelContainer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;overflow:hidden';
+    wrap.appendChild(labelContainer);
+
+    var labelEls = labelData.map(function(ld){
+      var el = document.createElement('div');
+      el.style.cssText = 'position:absolute;font-family:JetBrains Mono,monospace;font-size:10px;letter-spacing:2px;padding:4px 10px;border-radius:3px;background:rgba(0,0,0,0.7);border:1px solid '+ld.color+'40;color:'+ld.color+';text-transform:uppercase;white-space:nowrap;opacity:0;transition:opacity 0.5s;pointer-events:none;backdrop-filter:blur(4px)';
+      el.textContent = ld.name;
+      labelContainer.appendChild(el);
+      return {el:el, idx:ld.idx};
+    });
+
+    var scratchVec = new THREE.Vector3();
+
+    /* Render loop */
+    function animate(){
+      requestAnimationFrame(animate);
+      if(autoRotate) theta += 0.003;
+      explosionTime += explosionSpeed;
+
+      /* Sine-wave explosion: 0 → full → 0 → full ... */
+      var t = (Math.sin(explosionTime - Math.PI/2) + 1) / 2; /* 0..1 smooth cycle */
+
+      /* Stagger layers: each starts slightly after the previous */
+      if(groups.length >= 5){
+        for(var i=1; i<5; i++){
+          var layerT = Math.max(0, Math.min(1, (t * 1.6 - i * 0.12)));
+          groups[i].position.z = groups[i].userData.baseZ + groups[i].userData.explosionZ * layerT;
+        }
+        /* Auto zoom based on max explosion */
+        radius = Math.max(radius, 750 + t * 180);
+        if(autoRotate) radius = 750 + t * 180;
+      }
+
+      /* Update label positions */
+      var cw = wrap.clientWidth, ch = wrap.clientHeight;
+      if(cw > 0 && ch > 0){
+        labelEls.forEach(function(ld){
+          var grp = groups[ld.idx];
+          if(!grp || !grp.userData.cachedCenter) return;
+          scratchVec.copy(grp.userData.cachedCenter);
+          scratchVec.z += grp.position.z;
+          scratchVec.project(camera);
+          var sx = (scratchVec.x * 0.5 + 0.5) * cw;
+          var sy = (-scratchVec.y * 0.5 + 0.5) * ch;
+          /* Position label to left or right */
+          var side = ld.idx % 2 === 0 ? -1 : 1;
+          ld.el.style.left = Math.max(5, Math.min(cw - 150, sx + side * 80)) + 'px';
+          ld.el.style.top = Math.max(5, Math.min(ch - 25, sy - 10)) + 'px';
+          /* Show labels only during explosion */
+          var layerProgress = ld.idx === 0 ? t : Math.max(0, Math.min(1, (t * 1.6 - ld.idx * 0.12)));
+          ld.el.style.opacity = layerProgress > 0.3 && layerProgress < 0.95 ? '1' : '0';
+        });
+      }
+
+      camera.position.set(
+        target.x + radius * Math.sin(phi) * Math.cos(theta),
+        target.y + radius * Math.sin(phi) * Math.sin(theta),
+        target.z + radius * Math.cos(phi)
+      );
+      camera.lookAt(target);
+      renderer.render(scene, camera);
+    }
+    animate();
+    resize();
   }
 });
 
