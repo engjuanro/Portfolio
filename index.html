@@ -1658,10 +1658,10 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
 
   /* Hero */
   .hero h1{letter-spacing:-1.5px}
-  .hero .subtitle{padding:0 var(--pad-gutter)}
+  .hero .subtitle{padding:0 var(--pad-gutter);font-size:15px}
   .hero-cta{flex-direction:column;align-items:stretch;padding:0 var(--pad-gutter);gap:10px}
   .hero-cta .btn{width:100%;min-height:52px;justify-content:center}
-  .scroll-cue{bottom:24px}
+  .scroll-cue{display:none}
 
   /* Section headers */
   .section-header{padding:0 var(--pad-gutter) 50px}
@@ -1698,25 +1698,33 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
 
   /* Exploded sections (PCB/PSG) — NO pinning on mobile */
   .exploded-section{overflow:hidden;height:auto !important}
-  .exploded-pin{height:auto !important;min-height:auto;position:relative !important}
+  .exploded-pin{height:auto !important;min-height:auto;position:relative !important;display:block}
   /* Section intro: show as normal block header (not absolute centered) */
-  .section-intro{position:relative !important;top:auto !important;left:auto !important;transform:none !important;padding:40px 16px 20px;opacity:1 !important;pointer-events:auto}
+  .section-intro{position:relative !important;top:auto !important;left:auto !important;transform:none !important;padding:40px 16px 20px;opacity:1 !important;pointer-events:auto;display:block !important}
   .section-intro h2{letter-spacing:-1px}
   .section-intro p{font-size:14px;padding:0 16px}
-  /* 3D canvas container: show compact on mobile */
-  .exploded-container{width:100vw;height:50vh;opacity:1 !important;visibility:visible !important}
+  /* 3D canvas & loader: HIDE on mobile (useless without scroll-driven animation) */
+  #pcb3dCanvas{display:none !important}
+  #pcb-exploded::before{display:none !important}
+  .pcb-interact-btn{display:none !important}
+  .pcb-loader{display:none !important}
+  /* Exploded containers: auto-height, full width, show content */
+  .exploded-container{width:100% !important;height:auto !important;min-height:auto !important;opacity:1 !important;visibility:visible !important;position:relative !important}
   /* Labels: stack vertically as info cards (not absolute positioned) */
   .exploded-label,.pcb3d-label{
     position:relative !important;opacity:1 !important;visibility:visible !important;
+    transform:none !important;
     margin:8px 16px;display:block !important;
     left:auto !important;top:auto !important;right:auto !important;bottom:auto !important;
-    padding:10px 14px;max-width:none;pointer-events:auto !important;
+    padding:12px 16px;max-width:none !important;pointer-events:auto !important;
+    text-align:left !important;
   }
-  .exploded-label .label-title{font-size:12px;letter-spacing:1.5px;margin-bottom:4px}
-  .exploded-label .label-spec{font-size:11px;line-height:1.5}
+  .exploded-label.from-left,.exploded-label.from-right{transform:none !important}
+  .exploded-label .label-title{font-size:13px;letter-spacing:1.5px;margin-bottom:4px}
+  .exploded-label .label-spec{font-size:11.5px;line-height:1.6}
   .exploded-label .label-num{font-size:8px;padding:2px 6px}
-  .pcb-interact-btn{display:none !important}
-  .pcb-loader{display:none !important}
+  /* PSG SVG schematic: compact on mobile */
+  #psg-exploded svg{position:relative !important;width:100%;height:220px}
   #exploded-psg{height:auto !important}
   #exploded-pcb{height:auto !important}
   /* On mobile, show the exploded content directly (no scroll-driven animation) */
@@ -1816,10 +1824,10 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
   .project-category{font-size:9px;letter-spacing:2px}
   .timeline-role{font-size:14px}
   .timeline-content{padding:12px}
-  .exploded-label{max-width:150px;padding:6px 8px}
-  .exploded-label .label-title{font-size:10px;letter-spacing:1px}
-  .exploded-label .label-spec{font-size:9px}
-  .exploded-container{height:70vh}
+  .exploded-label{max-width:none !important;padding:10px 12px;margin:6px 12px}
+  .exploded-label .label-title{font-size:11px;letter-spacing:1px}
+  .exploded-label .label-spec{font-size:10px}
+  #psg-exploded svg{height:180px}
   .skill-card{flex:0 0 200px;padding:16px}
   .skill-name{font-size:14px}
   .nav-links a{font-size:15px;padding:12px 14px}
@@ -3713,17 +3721,17 @@ function initAnimations() {
       display: { y:-60, x:40 }
     });
   } else {
-    /* MOBILE: Show exploded content immediately — no pin, no scroll-driven animation */
+    /* MOBILE: Show intro + labels as stacked cards — no 3D, no scroll animation */
     ['pcb','psg'].forEach(function(name){
       var intro = document.getElementById(name + '-intro');
       var exploded = document.getElementById(name + '-exploded');
       var labels = document.querySelectorAll('#exploded-' + name + ' .exploded-label, #exploded-' + name + ' .pcb3d-label');
-      if (intro) gsap.set(intro, { opacity:0, display:'none' });
+      /* Keep intro visible on mobile (CSS handles display:block !important) */
+      if (intro) gsap.set(intro, { opacity:1 });
       if (exploded) gsap.set(exploded, { opacity:1, visibility:'visible' });
-      labels.forEach(function(l){ gsap.set(l, { opacity:1 }); });
+      labels.forEach(function(l){ gsap.set(l, { opacity:1, visibility:'visible', transform:'none' }); });
     });
-    /* Start PCB 3D render loop on mobile even without scroll pin */
-    if (typeof setupPCB3DRenderOnly === 'function') setupPCB3DRenderOnly();
+    /* Do NOT start PCB 3D on mobile — canvas is hidden via CSS */
   }
 
   // ── STATS COUNTER ──
