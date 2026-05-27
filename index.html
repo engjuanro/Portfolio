@@ -1971,7 +1971,7 @@ body.edit-mode .img-upload-overlay:hover{opacity:1}
   <div class="hero-overline" data-editable="overline">Factory Automation &bull; Industrial Robotics &bull; Additive Mfg Systems &bull; Production Engineering &bull; Digital Twin &bull; SCADA/MES &bull; Supply Chain &bull; MBA</div>
   <h1 data-editable="name">Juan<br>Rodriguez</h1>
   <p class="subtitle" data-editable="subtitle">Principal Engineer, MBA &mdash; 13 years architecting turnkey automated production lines and robotic systems for mission-critical manufacturing. 150+ clients &bull; OEE gains of 12% &bull; $2M+ programs delivered from concept through validated production. I build the factory that builds the product.</p>
-  <p class="location-line">&mdash; Chicago, IL &bull; EAD Work Permit &bull; Open to Relocation &mdash;</p>
+  <!-- location-line removed per user request -->
   <div class="hero-cta">
     <a href="#projects" class="btn btn-primary" onclick="event.preventDefault();document.getElementById('projects').scrollIntoView({behavior:'smooth'})">View My Work &rarr;</a>
     <a href="https://www.linkedin.com/in/ing-juan-rodriguez/" target="_blank" class="btn btn-primary btn-white" style="background:#fff;color:#050505;box-shadow:0 0 20px rgba(255,255,255,0.15)">LinkedIn</a>
@@ -2888,15 +2888,6 @@ const PORTFOLIO_DATA = {
       ]
     },
     {
-      id: 'ai-qc',
-      category: 'AI / Machine Learning',
-      title: 'Computer Vision — Automated Quality Control',
-      desc: 'Architected CNN-based visual inspection pipeline for automated quality control in pharmaceutical production &mdash; the same machine vision discipline used in additive manufacturing print inspection and robotic cell quality assurance.<br><br><strong>Pipeline:</strong> Custom TensorFlow/OpenCV CNN trained on production defect datasets, deployed as edge AI inference on industrial hardware (NVIDIA Jetson) integrated with PLC control loops for real-time accept/reject decisions at line speed. PLC triggers camera capture, AI classifies in &lt;100ms, result feeds back to reject actuator.<br><br><strong>Results:</strong> 99.2% defect detection accuracy, sub-100ms inference time, zero false-positive batch rejections in production validation. Eliminated manual visual inspection bottleneck on the packaging line.',
-      tags: ['Python','TensorFlow','OpenCV','Edge AI','PLC Integration','CNN'],
-      featured: false,
-      image: ''
-    },
-    {
       id: 'robot-custom',
       category: 'Custom Robotics &mdash; Full Stack End-to-End (Designed &amp; Built From Scratch)',
       title: 'DYS 6-DOF Manipulator &mdash; SolidWorks &bull; ARM Firmware &bull; Hybrid IK/FK &bull; Real-Time 3D Simulator',
@@ -3013,6 +3004,15 @@ const PORTFOLIO_DATA = {
       images: [
         'videos/12_Thermoelectric/thermoelectric-plant-walkthrough.mp4'
       ]
+    },
+    {
+      id: 'ai-qc',
+      category: 'AI / Machine Learning',
+      title: 'Computer Vision — Automated Quality Control',
+      desc: 'Architected CNN-based visual inspection pipeline for automated quality control in pharmaceutical production &mdash; the same machine vision discipline used in additive manufacturing print inspection and robotic cell quality assurance.<br><br><strong>Pipeline:</strong> Custom TensorFlow/OpenCV CNN trained on production defect datasets, deployed as edge AI inference on industrial hardware (NVIDIA Jetson) integrated with PLC control loops for real-time accept/reject decisions at line speed. PLC triggers camera capture, AI classifies in &lt;100ms, result feeds back to reject actuator.<br><br><strong>Results:</strong> 99.2% defect detection accuracy, sub-100ms inference time, zero false-positive batch rejections in production validation. Eliminated manual visual inspection bottleneck on the packaging line.',
+      tags: ['Python','TensorFlow','OpenCV','Edge AI','PLC Integration','CNN'],
+      featured: false,
+      image: ''
     },
     {
       id: 'embedded',
