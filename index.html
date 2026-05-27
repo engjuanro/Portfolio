@@ -5842,5 +5842,85 @@ function setupPCB3DExplodedView() {
     /* Slow auto-rotate (pauses during user drag) */
     if(!pcbDragging) pcbTheta += 0.0015;
 
-    /* Apply explosion per-layer — each group uses its own progress */
-    if(pcbGro
+    if(pcbGroups.length >= 5){
+      pcbGroups[1].position.z = pcbGroups[1].userData.baseZ + pcbGroups[1].userData.explosionZ * pcbExplosion.layer1;
+      pcbGroups[2].position.z = pcbGroups[2].userData.baseZ + pcbGroups[2].userData.explosionZ * pcbExplosion.layer2;
+      pcbGroups[3].position.z = pcbGroups[3].userData.baseZ + pcbGroups[3].userData.explosionZ * pcbExplosion.layer3;
+      pcbGroups[4].position.z = pcbGroups[4].userData.baseZ + pcbGroups[4].userData.explosionZ * pcbExplosion.layer4;
+
+      /* Auto zoom-out as explosion progresses — keep everything on screen */
+      var maxExp = Math.max(pcbExplosion.layer1, pcbExplosion.layer2, pcbExplosion.layer3, pcbExplosion.layer4);
+      if(!pcbInteractive){
+        pcbRadius = 650 + maxExp * 200; /* 650 → 850 at full explosion */
+      }
+    }
+
+    /* Update label visibility per layer — smoothstep for organic feel */
+    var anyLabelVisible = false;
+    pcbLabelDefs.forEach(function(ld){
+      if(!ld.el) return;
+      var raw = pcbExplosion[ld.layerKey] || 0;
+      var v = raw * raw * (3 - 2 * raw); /* smoothstep */
+      ld.el.style.opacity = v;
+      ld.el.style.visibility = v > 0.01 ? 'visible' : 'hidden';
+      if(v > 0.01){ ld.el.classList.add('label-visible'); anyLabelVisible = true; }
+      else ld.el.classList.remove('label-visible');
+    });
+    if(pcbLineSVG) pcbLineSVG.style.opacity = anyLabelVisible ? 1 : 0;
+
+    /* Spherical camera (same math as robot viewer) */
+    pcbCamera.position.set(
+      pcbTarget.x + pcbRadius * Math.sin(pcbPhi) * Math.cos(pcbTheta),
+      pcbTarget.y + pcbRadius * Math.sin(pcbPhi) * Math.sin(pcbTheta),
+      pcbTarget.z + pcbRadius * Math.cos(pcbPhi)
+    );
+    pcbCamera.lookAt(pcbTarget);
+
+    /* Project labels + draw connecting lines (CG Labs style) */
+    if(anyLabelVisible && pcbGroups.length >= 5){
+      var cw2 = exploded.clientWidth, ch2 = exploded.clientHeight;
+      pcbLabelDefs.forEach(function(ld){
+        if(!ld.el) return;
+        var grp = pcbGroups[ld.groupIdx];
+        pcbScratchVec.copy(grp.userData.cachedCenter);
+        pcbScratchVec.z += grp.position.z;
+        pcbScratchVec.project(pcbCamera);
+        var anchorX = (pcbScratchVec.x * 0.5 + 0.5) * cw2;
+        var anchorY = (-pcbScratchVec.y * 0.5 + 0.5) * ch2;
+        var sx = anchorX + ld.offX;
+        var sy = anchorY + ld.offY;
+        sx = Math.max(10, Math.min(cw2 - 320, sx));
+        sy = Math.max(10, Math.min(ch2 - 100, sy));
+        ld.el.style.left = sx + 'px';
+        ld.el.style.top = sy + 'px';
+        /* Animated connecting line from anchor to label edge */
+        var lineEndX = sx + (ld.offX > 0 ? 0 : 200);
+        var lineEndY = sy + 12;
+        var isVisible = parseFloat(ld.el.style.opacity) > 0.05;
+        if(ld.line){
+          ld.line.setAttribute('x1', anchorX);
+          ld.line.setAttribute('y1', anchorY);
+          ld.line.setAttribute('x2', lineEndX);
+          ld.line.setAttribute('y2', lineEndY);
+          ld.line.setAttribute('stroke-dashoffset', isVisible ? '0' : '500');
+        }
+        if(ld.dot){
+          ld.dot.setAttribute('cx', anchorX);
+          ld.dot.setAttribute('cy', anchorY);
+          ld.dot.style.opacity = isVisible ? '1' : '0';
+        }
+        if(ld.ring){
+          ld.ring.setAttribute('cx', anchorX);
+          ld.ring.setAttribute('cy', anchorY);
+          ld.ring.style.opacity = isVisible ? '1' : '0';
+        }
+      });
+    }
+
+    pcbRenderer.render(pcbScene, pcbCamera);
+  }
+}
+</script>
+
+</body>
+</html>
